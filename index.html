@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HULUX · Seguimiento de Campañas</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-brand">
+    <span>HULUX</span> Telecomunicaciones
+    <div class="header-badge">Marketing</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div id="sync-status"><span style="color:#666;font-size:12px;">⏳ Conectando...</span></div>
+    <div style="font-size:12px;color:var(--gris-500);" id="header-fecha"></div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-tab active" onclick="showScreen('campanas')">📋 Campañas</div>
+  <div class="nav-tab" onclick="showScreen('reporte')">📥 Reporte Semanal</div>
+  <div class="nav-tab" onclick="showScreen('dashboard')">📊 Dashboard KPIs</div>
+</nav>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PANTALLA 1: CAMPAÑAS -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="main screen active" id="screen-campanas">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+    <div>
+      <div class="section-title">Campañas activas</div>
+      <div class="section-sub">Registra y gestiona cada campaña de marketing.</div>
+    </div>
+    <button class="btn btn-primary" onclick="abrirModalCampana()">+ Nueva campaña</button>
+  </div>
+
+  <div id="campana-list-wrap">
+    <div class="empty-state" id="empty-campanas">
+      <div class="empty-icon">📣</div>
+      <div class="empty-title">Sin campañas registradas</div>
+      <div class="empty-sub">Crea tu primera campaña para comenzar el seguimiento.</div>
+    </div>
+    <div class="campana-list" id="campana-list"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PANTALLA 2: REPORTE SEMANAL -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="main screen" id="screen-reporte">
+  <div class="section-title">Reporte semanal</div>
+  <div class="section-sub">Ingresa los resultados de cada campaña semana a semana.</div>
+
+  <div id="reporte-sin-campanas" class="empty-state" style="display:none;">
+    <div class="empty-icon">📭</div>
+    <div class="empty-title">No hay campañas activas</div>
+    <div class="empty-sub">Registra al menos una campaña para ingresar reportes.</div>
+  </div>
+
+  <div id="reporte-form-wrap">
+    <!-- Selector campaña -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Selecciona campaña</div>
+      <div id="reporte-campana-btns" class="dash-campana-select"></div>
+    </div>
+
+    <!-- Semana -->
+    <div class="semana-nav">
+      <span style="font-size:13px;font-weight:600;color:var(--gris-700);">📅 Semana:</span>
+      <select id="reporte-semana" onchange="cargarReporteSemana()"></select>
+      <button class="btn btn-ghost" style="padding:8px 14px;font-size:13px;" onclick="agregarSemana()">+ Semana nueva</button>
+    </div>
+
+    <!-- Form captación -->
+    <div id="form-captacion" style="display:none;">
+      <div class="card">
+        <div class="card-title">📊 Resultados — Captación</div>
+
+        <!-- Gasto único -->
+        <div class="form-group" style="margin-bottom:18px;">
+          <label>Gasto total de la semana (MXN)</label>
+          <input type="number" id="r-gasto" placeholder="0" min="0" style="max-width:260px;">
+        </div>
+
+        <!-- Tabla FB / IG -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;margin-bottom:8px;padding-bottom:8px;border-bottom:2px solid #F0F0F0;">
+          <div style="font-size:11px;font-weight:700;color:var(--gris-500);text-transform:uppercase;letter-spacing:0.5px;"></div>
+          <div style="font-size:11px;font-weight:700;color:#1877F2;text-transform:uppercase;letter-spacing:0.5px;text-align:center;">📘 Facebook</div>
+          <div style="font-size:11px;font-weight:700;color:#E1306C;text-transform:uppercase;letter-spacing:0.5px;text-align:center;">📷 Instagram</div>
+          <div style="font-size:11px;font-weight:700;color:var(--naranja-deep);text-transform:uppercase;letter-spacing:0.5px;text-align:center;">Total</div>
+        </div>
+
+        <!-- Fila: Contactos -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;align-items:center;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:600;color:var(--gris-700);">Contactos recibidos</div>
+          <div><input type="number" id="r-contactos-fb" placeholder="0" min="0" oninput="calcularLeads()" style="text-align:center;border-color:#BFDBFE;background:#EFF6FF;"></div>
+          <div><input type="number" id="r-contactos-ig" placeholder="0" min="0" oninput="calcularLeads()" style="text-align:center;border-color:#FBCFE8;background:#FDF2F8;"></div>
+          <div><input type="number" id="r-contactos" placeholder="—" readonly style="text-align:center;background:#F8F8F8;font-weight:700;"></div>
+        </div>
+
+        <!-- Fila: Soporte -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;align-items:center;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:600;color:var(--gris-700);">Solicitudes de soporte</div>
+          <div><input type="number" id="r-soporte-fb" placeholder="0" min="0" oninput="calcularLeads()" style="text-align:center;border-color:#BFDBFE;background:#EFF6FF;"></div>
+          <div><input type="number" id="r-soporte-ig" placeholder="0" min="0" oninput="calcularLeads()" style="text-align:center;border-color:#FBCFE8;background:#FDF2F8;"></div>
+          <div><input type="number" id="r-soporte" placeholder="—" readonly style="text-align:center;background:#F8F8F8;font-weight:700;"></div>
+        </div>
+
+        <!-- Fila: Leads reales -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;align-items:center;padding-top:10px;border-top:2px solid #F0F0F0;">
+          <div style="font-size:13px;font-weight:700;color:var(--naranja-deep);">Leads reales</div>
+          <div><input type="number" id="r-leads-fb" placeholder="—" readonly style="text-align:center;background:#FFF8F5;font-weight:700;color:var(--naranja-deep);border-color:#FFD4B8;"></div>
+          <div><input type="number" id="r-leads-ig" placeholder="—" readonly style="text-align:center;background:#FFF8F5;font-weight:700;color:var(--naranja-deep);border-color:#FFD4B8;"></div>
+          <div><input type="number" id="r-leads" placeholder="—" readonly style="text-align:center;background:#FFF0E8;font-weight:800;color:var(--naranja-deep);border-color:var(--naranja);"></div>
+        </div>
+
+        <div class="nota-calculo" style="margin-top:14px;">💡 Leads reales = Contactos − Soporte · El CPL se calcula sobre el total combinado</div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <div class="card-title">📍 Leads y cierres por municipio</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;margin-bottom:10px;">
+          <div style="font-size:11px;font-weight:700;color:var(--gris-500);text-transform:uppercase;letter-spacing:0.5px;padding:0 4px;">Municipio</div>
+          <div style="font-size:11px;font-weight:700;color:var(--naranja-deep);text-transform:uppercase;letter-spacing:0.5px;text-align:center;">Leads</div>
+          <div style="font-size:11px;font-weight:700;color:var(--verde);text-transform:uppercase;letter-spacing:0.5px;text-align:center;">Cierres</div>
+          <div style="font-size:11px;font-weight:700;color:#7C3AED;text-transform:uppercase;letter-spacing:0.5px;text-align:center;">MRR $</div>
+        </div>
+        <div id="municipio-grid-combinado"></div>
+        <div class="divider"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;">
+          <div style="font-size:13px;color:var(--gris-500);font-weight:600;">Total</div>
+          <div style="text-align:center;"><span class="td-mono" id="total-leads-mun" style="font-size:16px;color:var(--naranja-deep);">0</span></div>
+          <div style="text-align:center;"><span class="td-mono" id="total-cierres-reporte" style="font-size:16px;color:var(--verde);">0</span></div>
+          <div style="text-align:center;"><span class="td-mono" id="total-mrr-reporte" style="font-size:16px;color:#7C3AED;">$0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form reconocimiento -->
+    <div id="form-reconocimiento" style="display:none;">
+      <div class="card">
+        <div class="card-title">👁 Resultados — Reconocimiento</div>
+        <div class="form-grid cols-3">
+          <div class="form-group">
+            <label>Gasto de la semana (MXN)</label>
+            <input type="number" id="r-gasto-rec" placeholder="0" min="0">
+          </div>
+          <div class="form-group">
+            <label>Alcance (personas)</label>
+            <input type="number" id="r-alcance" placeholder="0" min="0">
+          </div>
+          <div class="form-group">
+            <label>Impresiones</label>
+            <input type="number" id="r-impresiones" placeholder="0" min="0">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="form-empty" class="empty-state" style="display:none;padding:40px 0;">
+      <div class="empty-icon">👆</div>
+      <div class="empty-title">Selecciona una campaña</div>
+    </div>
+
+    <div id="btn-guardar-wrap" class="btn-row" style="display:none;">
+      <button class="btn btn-ghost" onclick="limpiarFormReporte()">Limpiar</button>
+      <button class="btn btn-primary" onclick="guardarReporte()">Guardar reporte ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PANTALLA 3: DASHBOARD -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="main screen" id="screen-dashboard">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div>
+      <div class="section-title">Dashboard KPIs</div>
+      <div class="section-sub">Resumen del mes activo y desglose por campaña.</div>
+    </div>
+  </div>
+
+  <div id="dash-empty" class="empty-state" style="display:none;">
+    <div class="empty-icon">📊</div>
+    <div class="empty-title">Sin datos aún</div>
+    <div class="empty-sub">Registra al menos un reporte semanal para ver el dashboard.</div>
+  </div>
+
+  <div id="dash-content" style="display:none;">
+    <!-- Filtro de mes -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;background:var(--blanco);border:1px solid #E8E8E8;border-radius:var(--radio-lg);padding:12px 16px;">
+      <button class="btn btn-ghost" style="padding:6px 12px;font-size:16px;" onclick="navMes(-1)">‹</button>
+      <select id="dash-mes-select" onchange="dashMesSeleccionado=this.value;renderDashboard()" style="flex:1;font-size:15px;font-weight:700;border:none;background:transparent;text-align:center;cursor:pointer;"></select>
+      <button class="btn btn-ghost" style="padding:6px 12px;font-size:16px;" onclick="navMes(1)">›</button>
+    </div>
+
+    <!-- Resumen consolidado del mes -->
+    <div id="dash-resumen"></div>
+
+    <!-- Divisor -->
+    <div style="display:flex;align-items:center;gap:12px;margin:24px 0 16px;">
+      <div style="flex:1;height:1px;background:#E8E8E8;"></div>
+      <span style="font-size:12px;font-weight:700;color:var(--gris-500);text-transform:uppercase;letter-spacing:0.8px;">Desglose por campaña</span>
+      <div style="flex:1;height:1px;background:#E8E8E8;"></div>
+    </div>
+
+    <!-- Desglose por campaña -->
+    <div id="dash-desglose"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- MODAL NUEVA CAMPAÑA -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-campana">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-campana-title">Nueva campaña</div>
+      <button class="modal-close" onclick="cerrarModal('modal-campana')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Nombre de la campaña</label>
+        <input type="text" id="c-nombre" placeholder="Ej. Campaña residencial junio 2025">
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Canal</label>
+        <div class="canal-toggle">
+          <div class="canal-btn selected" id="canal-meta" onclick="selectCanal('Meta Ads')">📘 Meta Ads</div>
+          <div class="canal-btn" id="canal-tiktok" onclick="selectCanal('TikTok')">🎵 TikTok</div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Objetivo de la campaña</label>
+        <div class="tipo-toggle">
+          <div class="tipo-btn selected" id="tipo-captacion" onclick="selectTipo('Captación')">
+            <span class="tipo-icon">🎯</span>
+            <div class="tipo-label">Captación</div>
+            <div class="tipo-desc">Generar leads y nuevos clientes</div>
+          </div>
+          <div class="tipo-btn" id="tipo-reconocimiento" onclick="selectTipo('Reconocimiento')">
+            <span class="tipo-icon">👁</span>
+            <div class="tipo-label">Reconocimiento</div>
+            <div class="tipo-desc">Alcance y visibilidad de marca</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid" style="margin-bottom:16px;">
+        <div class="form-group">
+          <label>Presupuesto total (MXN)</label>
+          <input type="number" id="c-presupuesto" placeholder="0" min="0">
+        </div>
+        <div class="form-group" id="meta-group">
+          <label id="meta-label">Meta de leads</label>
+          <input type="number" id="c-meta" placeholder="0" min="0">
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Fecha inicio</label>
+          <input type="date" id="c-inicio">
+        </div>
+        <div class="form-group">
+          <label>Fecha fin</label>
+          <input type="date" id="c-fin">
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="cerrarModal('modal-campana')">Cancelar</button>
+        <button class="btn btn-primary" onclick="guardarCampana()">Crear campaña</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMACIÓN ELIMINAR -->
+<div class="modal-overlay" id="modal-eliminar">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title">¿Eliminar campaña?</div>
+      <button class="modal-close" onclick="cerrarModal('modal-eliminar')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:14px;color:var(--gris-700);margin-bottom:20px;">
+        Se eliminarán también todos los reportes semanales asociados. Esta acción no se puede deshacer.
+      </p>
+      <div class="btn-row" style="margin-top:0;padding-top:0;border-top:none;">
+        <button class="btn btn-ghost" onclick="cerrarModal('modal-eliminar')">Cancelar</button>
+        <button class="btn btn-danger" onclick="confirmarEliminar()" style="background:var(--rojo);color:#fff;border:none;">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script src="app.js"></script>
+</body>
+</html>
