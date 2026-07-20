@@ -163,16 +163,15 @@ function getSemanas(campana) {
 // NAVEGACIÓN
 // ════════════════════════════════════════════
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
   document.getElementById('screen-' + id).classList.add('active');
-  const tabs = document.querySelectorAll('.nav-tab');
-  const map = { campanas: 0, pipeline: 1, reporte: 2, dashboard: 3, config: 4 };
+  var tabs = document.querySelectorAll('.nav-tab');
+  var map = { campanas: 0, pipeline: 1, reporte: 2, dashboard: 3, ajustes: 4 };
   if (map[id] !== undefined) tabs[map[id]].classList.add('active');
   if (id === 'reporte')   renderReporte();
   if (id === 'dashboard') renderDashboard();
   if (id === 'campanas')  renderCampanas();
   if (id === 'pipeline')  renderPipeline();
-  if (id === 'config')    renderConfig();
+  if (id === 'ajustes')   renderAjustes();
 }
-

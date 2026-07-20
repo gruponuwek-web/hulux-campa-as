@@ -26,7 +26,7 @@
   <div class="nav-tab" onclick="showScreen('pipeline')">🔁 Pipeline</div>
   <div class="nav-tab" onclick="showScreen('reporte')">📥 Reporte Semanal</div>
   <div class="nav-tab" onclick="showScreen('dashboard')">📊 Dashboard KPIs</div>
-  <div class="nav-tab" onclick="showScreen('config')">⚙️ Configuración</div>
+  <div class="nav-tab" onclick="showScreen('ajustes')">⚙️ Ajustes</div>
 </nav>
 
 <!-- ═══════════════════════════════════════════ -->
@@ -397,50 +397,35 @@
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- PANTALLA: CONFIGURACIÓN -->
+<!-- PANTALLA: AJUSTES -->
 <!-- ═══════════════════════════════════════════ -->
-<div class="main screen" id="screen-config">
-  <div class="section-title">Configuración</div>
+<div class="main screen" id="screen-ajustes">
+  <div class="section-title">Ajustes</div>
   <div class="section-sub">Catálogos vivos — los cambios se reflejan en todo el portal.</div>
+  <div id="ajustes-contenido"></div>
+</div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-
-    <!-- Agentes -->
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div class="card-title" style="margin-bottom:0;">👤 Agentes vendedores</div>
-        <button class="btn btn-outline" style="padding:6px 12px;font-size:12px;" onclick="agregarCatalogo('agentes')">+ Agregar</button>
-      </div>
-      <div id="lista-agentes"></div>
+<!-- MODAL AJUSTES -->
+<div class="modal-overlay" id="modal-ajustes" onclick="if(event.target===this)cerrarAjusteModal()">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title" id="ajuste-modal-titulo">Agregar elemento</div>
+      <button class="modal-close" onclick="cerrarAjusteModal()">✕</button>
     </div>
-
-    <!-- Sucursales -->
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div class="card-title" style="margin-bottom:0;">🏢 Sucursales</div>
-        <button class="btn btn-outline" style="padding:6px 12px;font-size:12px;" onclick="agregarCatalogo('sucursales')">+ Agregar</button>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:16px;">
+        <label for="ajuste-input-nombre">Nombre</label>
+        <input type="text" id="ajuste-input-nombre" placeholder="">
       </div>
-      <div id="lista-sucursales"></div>
-    </div>
-
-    <!-- Paquetes -->
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div class="card-title" style="margin-bottom:0;">📦 Paquetes</div>
-        <button class="btn btn-outline" style="padding:6px 12px;font-size:12px;" onclick="agregarCatalogo('paquetes')">+ Agregar</button>
+      <div id="ajuste-wrap-precio" style="display:none;margin-bottom:16px;" class="form-group">
+        <label for="ajuste-input-precio">Precio base (MXN / mes)</label>
+        <input type="number" id="ajuste-input-precio" placeholder="0" min="0">
       </div>
-      <div id="lista-paquetes"></div>
-    </div>
-
-    <!-- Promociones -->
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div class="card-title" style="margin-bottom:0;">🎁 Promociones</div>
-        <button class="btn btn-outline" style="padding:6px 12px;font-size:12px;" onclick="agregarCatalogo('promociones')">+ Agregar</button>
+      <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:16px;border-top:1px solid #F0F0F0;margin-top:4px;">
+        <button class="btn btn-ghost" onclick="cerrarAjusteModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="guardarAjuste()">Guardar</button>
       </div>
-      <div id="lista-promociones"></div>
     </div>
-
   </div>
 </div>
 
@@ -604,7 +589,7 @@
 <script src="dashboard-mkt.js"></script>
 <script src="dashboard-ventas.js"></script>
 <script src="pipeline.js"></script>
-<script src="config.js"></script>
+<script src="ajustes.js"></script>
 <script src="init.js"></script>
 </body>
 </html>
