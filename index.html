@@ -338,7 +338,7 @@
   <div id="pipeline-alertas"></div>
 
   <!-- Header + botón -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
     <div>
       <div class="section-title">Pipeline comercial</div>
       <div class="section-sub">Leads calificados en negociación activa. La calificación de aptitud ocurre en respond.io.</div>
@@ -346,19 +346,19 @@
     <button class="btn btn-primary" onclick="abrirModalLead()">+ Nuevo lead</button>
   </div>
 
-  <!-- Filtros -->
-  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-    <select id="filtro-estado" onchange="renderPipeline()" style="font-size:13px;padding:7px 12px;border-radius:8px;border:1.5px solid #E0E0E0;background:#fff;cursor:pointer;">
+  <!-- Filtros en 3 columnas -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+    <select id="filtro-estado" onchange="renderPipeline()" style="font-size:13px;padding:8px 12px;border-radius:8px;border:1.5px solid #E0E0E0;background:#fff;cursor:pointer;">
       <option value="">Todos los estados</option>
       <option value="negociacion">En negociación</option>
       <option value="contrato">Contrato firmado</option>
       <option value="instalado">Instalado ✅</option>
       <option value="cancelado">Cancelado</option>
     </select>
-    <select id="filtro-sucursal-pipe" onchange="renderPipeline()" style="font-size:13px;padding:7px 12px;border-radius:8px;border:1.5px solid #E0E0E0;background:#fff;cursor:pointer;">
+    <select id="filtro-sucursal-pipe" onchange="renderPipeline()" style="font-size:13px;padding:8px 12px;border-radius:8px;border:1.5px solid #E0E0E0;background:#fff;cursor:pointer;">
       <option value="">Todas las sucursales</option>
     </select>
-    <select id="filtro-agente-pipe" onchange="renderPipeline()" style="font-size:13px;padding:7px 12px;border-radius:8px;border:1.5px solid #E0E0E0;background:#fff;cursor:pointer;">
+    <select id="filtro-agente-pipe" onchange="renderPipeline()" style="font-size:13px;padding:8px 12px;border-radius:8px;border:1.5px solid #E0E0E0;background:#fff;cursor:pointer;">
       <option value="">Todos los agentes</option>
     </select>
   </div>
@@ -366,32 +366,70 @@
   <!-- KPIs rápidos -->
   <div id="pipeline-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;"></div>
 
-  <!-- Tabla de leads -->
-  <div class="card">
-    <div class="table-wrap">
-      <table id="pipeline-tabla">
-        <thead>
-          <tr>
-            <th>Prospecto</th>
-            <th>Sucursal</th>
-            <th>Campaña</th>
-            <th>Agente</th>
-            <th>Estado</th>
-            <th>Días</th>
-            <th>Contrato</th>
-            <th>Instalación</th>
-            <th>Paquete</th>
-            <th>MRR</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="pipeline-body"></tbody>
-      </table>
+  <!-- Toggle Vista -->
+  <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-bottom:12px;">
+    <div style="display:flex;gap:0;background:var(--gris-100);border-radius:8px;padding:3px;">
+      <button id="btn-vista-lista" onclick="switchVistaPipeline('lista')"
+        style="padding:6px 14px;border-radius:6px;border:none;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer;background:var(--blanco);color:var(--negro);box-shadow:0 1px 3px rgba(0,0,0,0.1);transition:all 0.15s;">
+        ☰ Lista
+      </button>
+      <button id="btn-vista-kanban" onclick="switchVistaPipeline('kanban')"
+        style="padding:6px 14px;border-radius:6px;border:none;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--gris-500);transition:all 0.15s;">
+        ⬜ Kanban
+      </button>
     </div>
-    <div class="empty-state" id="pipeline-empty" style="display:none;">
-      <div class="empty-icon">🔁</div>
-      <div class="empty-title">Sin leads en el pipeline</div>
-      <div class="empty-sub">Agrega el primer lead calificado para comenzar el seguimiento.</div>
+  </div>
+
+  <!-- Vista Lista -->
+  <div id="pipeline-vista-lista">
+    <div class="card">
+      <div class="table-wrap">
+        <table id="pipeline-tabla">
+          <thead>
+            <tr>
+              <th>Prospecto</th>
+              <th>Sucursal</th>
+              <th>Campaña</th>
+              <th>Agente</th>
+              <th>Estado</th>
+              <th>Días</th>
+              <th>Contrato</th>
+              <th>Instalación</th>
+              <th>Paquete</th>
+              <th>MRR</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="pipeline-body"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="pipeline-empty" style="display:none;">
+        <div class="empty-icon">🔁</div>
+        <div class="empty-title">Sin leads en el pipeline</div>
+        <div class="empty-sub">Agrega el primer lead calificado para comenzar el seguimiento.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vista Kanban -->
+  <div id="pipeline-vista-kanban" style="display:none;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--naranja-deep);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;padding:6px 10px;background:var(--naranja-light);border-radius:6px;">🤝 En negociación</div>
+        <div id="kanban-negociacion" style="display:flex;flex-direction:column;gap:8px;min-height:80px;"></div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#5B21B6;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;padding:6px 10px;background:#F5F3FF;border-radius:6px;">📄 Contrato firmado</div>
+        <div id="kanban-contrato" style="display:flex;flex-direction:column;gap:8px;min-height:80px;"></div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;padding:6px 10px;background:#DCFCE7;border-radius:6px;">✅ Instalado</div>
+        <div id="kanban-instalado" style="display:flex;flex-direction:column;gap:8px;min-height:80px;"></div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#991B1B;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;padding:6px 10px;background:#FEE2E2;border-radius:6px;">❌ Cancelado</div>
+        <div id="kanban-cancelado" style="display:flex;flex-direction:column;gap:8px;min-height:80px;"></div>
+      </div>
     </div>
   </div>
 </div>

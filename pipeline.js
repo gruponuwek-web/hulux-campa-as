@@ -1,6 +1,37 @@
 // ════════════════════════════════════════════
 // PIPELINE — UTILIDADES
 // ════════════════════════════════════════════
+var vistaPipeline = 'lista'; // 'lista' | 'kanban'
+
+function switchVistaPipeline(vista) {
+  vistaPipeline = vista;
+  var btnLista  = document.getElementById('btn-vista-lista');
+  var btnKanban = document.getElementById('btn-vista-kanban');
+  var vistaL    = document.getElementById('pipeline-vista-lista');
+  var vistaK    = document.getElementById('pipeline-vista-kanban');
+
+  if (vista === 'lista') {
+    btnLista.style.background  = 'var(--blanco)';
+    btnLista.style.color       = 'var(--negro)';
+    btnLista.style.boxShadow   = '0 1px 3px rgba(0,0,0,0.1)';
+    btnKanban.style.background = 'transparent';
+    btnKanban.style.color      = 'var(--gris-500)';
+    btnKanban.style.boxShadow  = 'none';
+    vistaL.style.display = '';
+    vistaK.style.display = 'none';
+  } else {
+    btnKanban.style.background = 'var(--blanco)';
+    btnKanban.style.color      = 'var(--negro)';
+    btnKanban.style.boxShadow  = '0 1px 3px rgba(0,0,0,0.1)';
+    btnLista.style.background  = 'transparent';
+    btnLista.style.color       = 'var(--gris-500)';
+    btnLista.style.boxShadow   = 'none';
+    vistaL.style.display = 'none';
+    vistaK.style.display = '';
+  }
+  renderPipeline();
+}
+
 function diasDesde(fechaStr) {
   if (!fechaStr) return null;
   const diff = Date.now() - new Date(fechaStr + 'T00:00:00').getTime();
@@ -163,11 +194,114 @@ function renderPipeline() {
     `;
     tbody.appendChild(tr);
   });
+
+  // ── Render Kanban ────────────────────────────
+  renderKanban(leads);
 }
 
-// ════════════════════════════════════════════
-// PIPELINE — MODAL LEAD
-// ════════════════════════════════════════════
+function renderKanban(leads) {
+  var cols = { negociacion: [], contrato: [], instalado: [], cancelado: [] };
+
+  // Usar todos los leads sin filtro de estado para el kanban
+  var todosLeads = state.leads.filter(function(l) {
+    var filtroS = document.getElementById('filtro-sucursal-pipe')?.value || '';
+    var filtroA = document.getElementById('filtro-agente-pipe')?.value || '';
+    if (filtroS && l.sucursal !== filtroS) return false;
+    if (filtroA && l.agente   !== filtroA) return false;
+    return true;
+  });
+
+  todosLeads.forEach(function(l) {
+    if (cols[l.estado]) cols[l.estado].push(l);
+  });
+
+  Object.keys(cols).forEach(function(estado) {
+    var col = document.getElementById('kanban-' + estado);
+    if (!col) return;
+    col.innerHTML = '';
+
+    if (!cols[estado].length) {
+      var empty = document.createElement('div');
+      empty.style.cssText = 'font-size:12px;color:var(--gris-400);text-align:center;padding:16px 0;';
+      empty.textContent = 'Sin leads';
+      col.appendChild(empty);
+      return;
+    }
+
+    cols[estado].forEach(function(l) {
+      var alerta = alertaReloj(l);
+      var dias   = diasDesde(l.fechaAlta);
+
+      var card = document.createElement('div');
+      card.style.cssText = 'background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:12px;cursor:pointer;transition:box-shadow 0.15s;' +
+        (alerta?.nivel === 'critica' ? 'border-left:3px solid var(--rojo);' :
+         alerta?.nivel === 'warn'    ? 'border-left:3px solid var(--amarillo);' :
+         dias >= 2 && estado === 'negociacion' ? 'border-left:3px solid var(--amarillo);' : '');
+
+      card.addEventListener('mouseover', function() { this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'; });
+      card.addEventListener('mouseout',  function() { this.style.boxShadow = 'none'; });
+      card.addEventListener('click',     function() { abrirModalLead(l.id); });
+
+      // Nombre
+      var nombre = document.createElement('div');
+      nombre.style.cssText = 'font-size:13px;font-weight:700;color:var(--negro);margin-bottom:2px;';
+      nombre.textContent = l.nombre || '—';
+      card.appendChild(nombre);
+
+      // Tel
+      if (l.telefono) {
+        var tel = document.createElement('div');
+        tel.style.cssText = 'font-size:11px;color:var(--gris-500);margin-bottom:6px;';
+        tel.textContent = l.telefono;
+        card.appendChild(tel);
+      }
+
+      // Tags
+      var tags = document.createElement('div');
+      tags.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;';
+
+      if (l.sucursal) {
+        var t1 = document.createElement('span');
+        t1.style.cssText = 'font-size:10px;background:var(--gris-100);color:var(--gris-700);padding:2px 7px;border-radius:10px;font-weight:500;';
+        t1.textContent = l.sucursal;
+        tags.appendChild(t1);
+      }
+      if (l.agente) {
+        var t2 = document.createElement('span');
+        t2.style.cssText = 'font-size:10px;background:#EFF6FF;color:#1D4ED8;padding:2px 7px;border-radius:10px;font-weight:500;';
+        t2.textContent = l.agente;
+        tags.appendChild(t2);
+      }
+      card.appendChild(tags);
+
+      // Footer: días + MRR
+      var footer = document.createElement('div');
+      footer.style.cssText = 'display:flex;justify-content:space-between;align-items:center;';
+
+      var diaEl = document.createElement('span');
+      diaEl.style.cssText = 'font-size:11px;font-weight:600;color:' + (dias >= 2 && estado === 'negociacion' ? 'var(--rojo)' : 'var(--gris-500)') + ';';
+      diaEl.textContent = dias !== null ? dias + 'd' : '';
+
+      var mrrEl = document.createElement('span');
+      mrrEl.style.cssText = 'font-size:12px;font-weight:700;color:#7C3AED;';
+      mrrEl.textContent = l.precio ? fmtMXN(l.precio) : '';
+
+      footer.appendChild(diaEl);
+      footer.appendChild(mrrEl);
+      card.appendChild(footer);
+
+      // Alerta
+      if (alerta) {
+        var alertaEl = document.createElement('div');
+        alertaEl.style.cssText = 'margin-top:6px;font-size:10px;font-weight:700;color:' + (alerta.nivel === 'critica' ? 'var(--rojo)' : 'var(--amarillo)') + ';';
+        alertaEl.textContent = (alerta.nivel === 'critica' ? '🚨 ' : '⚠️ ') + alerta.horas + 'hrs sin instalar';
+        card.appendChild(alertaEl);
+      }
+
+      col.appendChild(card);
+    });
+  });
+}
 function abrirModalLead(id) {
   leadEditandoId = id || null;
 
@@ -417,4 +551,3 @@ function calcularHulux24() {
     badge.innerHTML = `<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;color:#991B1B;">⚠️ HULUX 24 incumplido — ${horas} horas (${horas - 24}hrs de retraso)</div>`;
   }
 }
-
