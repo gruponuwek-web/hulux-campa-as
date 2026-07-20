@@ -67,8 +67,14 @@ function cargarStateLocal() {
     state.campanas   = parsed.campanas   || [];
     state.reportes   = parsed.reportes   || {};
     state.leads      = parsed.leads      || [];
-    state.catalogos  = parsed.catalogos  || { agentes:[], sucursales:[], paquetes:[], promociones:[] };
+    state.catalogos  = parsed.catalogos  || {};
   }
+  // Siempre garantizar estructura completa de catálogos
+  if (!state.catalogos)              state.catalogos  = {};
+  if (!state.catalogos.agentes)      state.catalogos.agentes     = [];
+  if (!state.catalogos.sucursales)   state.catalogos.sucursales  = [];
+  if (!state.catalogos.paquetes)     state.catalogos.paquetes    = [];
+  if (!state.catalogos.promociones)  state.catalogos.promociones = [];
 }
 
 async function cargarState() {
@@ -1310,7 +1316,16 @@ function eliminarLead(id) {
 // ════════════════════════════════════════════
 // CONFIGURACIÓN
 // ════════════════════════════════════════════
+function asegurarCatalogos() {
+  if (!state.catalogos) state.catalogos = {};
+  if (!state.catalogos.agentes)     state.catalogos.agentes     = [];
+  if (!state.catalogos.sucursales)  state.catalogos.sucursales  = [];
+  if (!state.catalogos.paquetes)    state.catalogos.paquetes    = [];
+  if (!state.catalogos.promociones) state.catalogos.promociones = [];
+}
+
 function renderConfig() {
+  asegurarCatalogos();
   renderListaCatalogo('agentes',    'lista-agentes');
   renderListaCatalogo('sucursales', 'lista-sucursales');
   renderListaCatalogo('paquetes',   'lista-paquetes');
@@ -1356,6 +1371,7 @@ let catalogoTipoActual = null;
 let catalogoIdxActual  = null;
 
 function agregarCatalogo(tipo) {
+  asegurarCatalogos();
   catalogoTipoActual = tipo;
   catalogoIdxActual  = null;
   const labels = { agentes:'Nombre del agente', sucursales:'Nombre de la sucursal', paquetes:'Nombre del paquete', promociones:'Nombre de la promoción' };
