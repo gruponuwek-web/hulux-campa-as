@@ -201,8 +201,14 @@ function renderPipeline() {
 
 function renderKanban(leads) {
   var cols = { negociacion: [], contrato: [], instalado: [], cancelado: [] };
+  var estadoConfig = {
+    negociacion: { label: 'En negociación', color: 'var(--naranja-deep)' },
+    contrato:    { label: 'Contrato firmado', color: '#5B21B6' },
+    instalado:   { label: 'Instalado', color: '#166534' },
+    cancelado:   { label: 'Cancelado', color: '#991B1B' },
+  };
 
-  // Usar todos los leads sin filtro de estado para el kanban
+  // Usar todos los leads sin filtro de estado
   var todosLeads = state.leads.filter(function(l) {
     var filtroS = document.getElementById('filtro-sucursal-pipe')?.value || '';
     var filtroA = document.getElementById('filtro-agente-pipe')?.value || '';
@@ -215,32 +221,90 @@ function renderKanban(leads) {
     if (cols[l.estado]) cols[l.estado].push(l);
   });
 
+  var dragLeadId = null; // id del lead que se está arrastrando
+
   Object.keys(cols).forEach(function(estado) {
     var col = document.getElementById('kanban-' + estado);
     if (!col) return;
     col.innerHTML = '';
 
+    // ── Drop zone ────────────────────────────
+    col.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      col.style.background = 'rgba(242,101,34,0.06)';
+      col.style.borderRadius = '8px';
+    });
+    col.addEventListener('dragleave', function() {
+      col.style.background = '';
+    });
+    col.addEventListener('drop', function(e) {
+      e.preventDefault();
+      col.style.background = '';
+      var id = e.dataTransfer.getData('text/plain');
+      if (!id) return;
+      var lead = state.leads.find(function(l) { return l.id === id; });
+      if (!lead || lead.estado === estado) return;
+
+      // Si es cancelado, pedir causa
+      if (estado === 'cancelado' && !lead.causaCancelacion) {
+        var causa = prompt('¿Causa de cancelación?\n\n1. Sin instalación a tiempo\n2. Precio\n3. Sin cobertura\n4. Eligió otra empresa\n5. Sin respuesta\n6. Otro\n\nEscribe la causa:');
+        if (!causa) return;
+        lead.causaCancelacion = causa;
+      }
+
+      // Si pasa a contrato, pedir fecha de contrato si no tiene
+      if (estado === 'contrato' && !lead.fechaContrato) {
+        lead.fechaContrato = new Date().toISOString().slice(0,10);
+      }
+
+      // Si pasa a instalado, pedir fecha real si no tiene
+      if (estado === 'instalado' && !lead.fechaInstalacionReal) {
+        lead.fechaInstalacionReal = new Date().toISOString().slice(0,10);
+        lead.gapInstalacionHoras = calcularGapHoras(lead.fechaInstalacion, lead.fechaInstalacionReal);
+      }
+
+      lead.estado = estado;
+      guardarStateLocal();
+      if (gsOnline) gs('saveLead', lead);
+      renderPipeline();
+    });
+
+    // ── Empty state ──────────────────────────
     if (!cols[estado].length) {
       var empty = document.createElement('div');
-      empty.style.cssText = 'font-size:12px;color:var(--gris-400);text-align:center;padding:16px 0;';
-      empty.textContent = 'Sin leads';
+      empty.style.cssText = 'font-size:12px;color:var(--gris-400);text-align:center;padding:20px 0;border:2px dashed #E8E8E8;border-radius:8px;';
+      empty.textContent = 'Arrastra aquí';
       col.appendChild(empty);
       return;
     }
 
+    // ── Cards ────────────────────────────────
     cols[estado].forEach(function(l) {
       var alerta = alertaReloj(l);
       var dias   = diasDesde(l.fechaAlta);
 
       var card = document.createElement('div');
-      card.style.cssText = 'background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:12px;cursor:pointer;transition:box-shadow 0.15s;' +
+      card.setAttribute('draggable', 'true');
+      card.setAttribute('data-id', l.id);
+      card.style.cssText = 'background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:12px;cursor:grab;transition:box-shadow 0.15s, opacity 0.15s;user-select:none;' +
         (alerta?.nivel === 'critica' ? 'border-left:3px solid var(--rojo);' :
          alerta?.nivel === 'warn'    ? 'border-left:3px solid var(--amarillo);' :
          dias >= 2 && estado === 'negociacion' ? 'border-left:3px solid var(--amarillo);' : '');
 
-      card.addEventListener('mouseover', function() { this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'; });
-      card.addEventListener('mouseout',  function() { this.style.boxShadow = 'none'; });
-      card.addEventListener('click',     function() { abrirModalLead(l.id); });
+      // Drag events
+      card.addEventListener('dragstart', function(e) {
+        e.dataTransfer.setData('text/plain', l.id);
+        card.style.opacity = '0.4';
+        card.style.cursor  = 'grabbing';
+      });
+      card.addEventListener('dragend', function() {
+        card.style.opacity = '1';
+        card.style.cursor  = 'grab';
+      });
+
+      // Hover + click para editar
+      card.addEventListener('mouseover', function() { card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'; });
+      card.addEventListener('mouseout',  function() { card.style.boxShadow = 'none'; });
 
       // Nombre
       var nombre = document.createElement('div');
@@ -258,8 +322,7 @@ function renderKanban(leads) {
 
       // Tags
       var tags = document.createElement('div');
-      tags.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;';
-
+      tags.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;';
       if (l.sucursal) {
         var t1 = document.createElement('span');
         t1.style.cssText = 'font-size:10px;background:var(--gris-100);color:var(--gris-700);padding:2px 7px;border-radius:10px;font-weight:500;';
@@ -274,7 +337,7 @@ function renderKanban(leads) {
       }
       card.appendChild(tags);
 
-      // Footer: días + MRR
+      // Footer
       var footer = document.createElement('div');
       footer.style.cssText = 'display:flex;justify-content:space-between;align-items:center;';
 
@@ -293,10 +356,17 @@ function renderKanban(leads) {
       // Alerta
       if (alerta) {
         var alertaEl = document.createElement('div');
-        alertaEl.style.cssText = 'margin-top:6px;font-size:10px;font-weight:700;color:' + (alerta.nivel === 'critica' ? 'var(--rojo)' : 'var(--amarillo)') + ';';
+        alertaEl.style.cssText = 'margin-top:6px;font-size:10px;font-weight:700;color:' + (alerta.nivel === 'critica' ? 'var(--rojo)' : '#D97706') + ';';
         alertaEl.textContent = (alerta.nivel === 'critica' ? '🚨 ' : '⚠️ ') + alerta.horas + 'hrs sin instalar';
         card.appendChild(alertaEl);
       }
+
+      // Botón editar pequeño
+      var btnEdit = document.createElement('button');
+      btnEdit.textContent = 'Editar';
+      btnEdit.style.cssText = 'margin-top:8px;width:100%;padding:4px;border-radius:6px;border:1px solid #E0E0E0;background:transparent;font-size:11px;font-weight:500;cursor:pointer;color:var(--gris-500);font-family:Inter,sans-serif;';
+      btnEdit.addEventListener('click', function(e) { e.stopPropagation(); abrirModalLead(l.id); });
+      card.appendChild(btnEdit);
 
       col.appendChild(card);
     });
