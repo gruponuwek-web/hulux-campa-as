@@ -1612,130 +1612,84 @@ function renderDashVentas() {
       </div>
     </div>
 
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
-
-      <!-- Por agente -->
-      <div class="card">
-        <div class="card-title">👤 Por agente vendedor</div>
-        ${Object.keys(porAgente).length === 0 ? '<div style="color:var(--gris-400);font-size:13px;">Sin datos</div>' : `
-        <div style="display:grid;grid-template-columns:1fr 40px 40px 40px 72px;gap:6px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid #F0F0F0;">
-          <div style="font-size:10px;font-weight:700;color:var(--gris-500);text-transform:uppercase;">Agente</div>
-          <div style="font-size:10px;font-weight:700;color:var(--gris-500);text-transform:uppercase;text-align:center;">L</div>
-          <div style="font-size:10px;font-weight:700;color:var(--verde);text-transform:uppercase;text-align:center;">✅</div>
-          <div style="font-size:10px;font-weight:700;color:var(--rojo);text-transform:uppercase;text-align:center;">❌</div>
-          <div style="font-size:10px;font-weight:700;color:#7C3AED;text-transform:uppercase;text-align:right;">MRR</div>
-        </div>
-        ${Object.entries(porAgente).sort((a,b) => b[1].mrr - a[1].mrr).map(([ag, d]) => `
-          <div style="display:grid;grid-template-columns:1fr 40px 40px 40px 72px;gap:6px;padding:5px 0;border-bottom:1px solid #FAFAFA;align-items:center;">
-            <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ag}</div>
-            <div style="font-size:12px;text-align:center;color:var(--gris-500);">${d.leads}</div>
-            <div style="font-size:12px;text-align:center;font-weight:700;color:var(--verde);">${d.instalados}</div>
-            <div style="font-size:12px;text-align:center;font-weight:700;color:var(--rojo);">${d.cancelados}</div>
-            <div style="font-size:12px;text-align:right;font-weight:700;color:#7C3AED;">${d.mrr > 0 ? fmtMXN(d.mrr) : '—'}</div>
-          </div>
-        `).join('')}`}
-      </div>
-
-      <!-- Por canal -->
-      <div class="card">
-        <div class="card-title">📡 Cierres por canal</div>
-        ${Object.keys(porCanal).length === 0 ? '<div style="color:var(--gris-400);font-size:13px;">Sin instalaciones registradas</div>' :
-        Object.entries(porCanal).sort((a,b) => b[1].mrr - a[1].mrr).map(([canal, d]) => {
-          const maxMrr = Math.max(...Object.values(porCanal).map(x => x.mrr), 1);
-          return `
-          <div style="margin-bottom:10px;">
-            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
-              <span style="font-weight:600;">${canal}</span>
-              <span style="color:#7C3AED;font-weight:700;">${fmtMXN(d.mrr)} · ${d.count} clientes</span>
-            </div>
-            <div style="height:8px;background:var(--gris-100);border-radius:4px;overflow:hidden;">
-              <div style="height:100%;width:${Math.round(d.mrr/maxMrr*100)}%;background:var(--verde);border-radius:4px;"></div>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>
-
-      <!-- Por paquete -->
-      <div class="card">
-        <div class="card-title">📦 Paquetes más vendidos</div>
-        ${Object.keys(porPaquete).length === 0 ? '<div style="color:var(--gris-400);font-size:13px;">Sin instalaciones</div>' :
-        Object.entries(porPaquete).sort((a,b) => b[1].count - a[1].count).map(([paq, d]) => {
-          const maxC = Math.max(...Object.values(porPaquete).map(x => x.count), 1);
-          return `
-          <div style="margin-bottom:10px;">
-            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
-              <span style="font-weight:600;">${paq}</span>
-              <span style="color:var(--naranja-deep);font-weight:700;">${d.count} ventas · ${fmtMXN(d.mrr)}</span>
-            </div>
-            <div style="height:8px;background:var(--gris-100);border-radius:4px;overflow:hidden;">
-              <div style="height:100%;width:${Math.round(d.count/maxC*100)}%;background:var(--naranja);border-radius:4px;"></div>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>
-
-      <!-- Cancelaciones -->
-      <div class="card">
-        <div class="card-title">❌ Cancelados por causa</div>
-        ${Object.keys(porCausa).length === 0 ? '<div style="color:var(--gris-400);font-size:13px;">Sin cancelaciones este mes 🎉</div>' : `
-        <div style="display:grid;grid-template-columns:1fr 36px 72px;gap:6px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid #F0F0F0;">
-          <div style="font-size:10px;font-weight:700;color:var(--gris-500);text-transform:uppercase;">Causa</div>
-          <div style="font-size:10px;font-weight:700;color:var(--gris-500);text-transform:uppercase;text-align:center;">#</div>
-          <div style="font-size:10px;font-weight:700;color:var(--rojo);text-transform:uppercase;text-align:right;">MRR perdido</div>
-        </div>
-        ${Object.entries(porCausa).sort((a,b) => b[1].mrr - a[1].mrr).map(([causa, d]) => `
-          <div style="display:grid;grid-template-columns:1fr 36px 72px;gap:6px;padding:5px 0;border-bottom:1px solid #FAFAFA;align-items:center;">
-            <div style="font-size:12px;font-weight:500;">${causa}</div>
-            <div style="font-size:12px;text-align:center;font-weight:700;color:var(--rojo);">${d.count}</div>
-            <div style="font-size:12px;text-align:right;font-weight:700;color:var(--rojo);">${d.mrr > 0 ? fmtMXN(d.mrr) : '—'}</div>
-          </div>
-        `).join('')}`}
-      </div>
-
+      <div class="card"><div class="card-title">👤 Por agente vendedor</div><div id="dash-ventas-agentes"></div></div>
+      <div class="card"><div class="card-title">📡 Cierres por canal</div><div id="dash-ventas-canal"></div></div>
+      <div class="card"><div class="card-title">📦 Paquetes más vendidos</div><div id="dash-ventas-paquete"></div></div>
+      <div class="card"><div class="card-title">❌ Cancelados por causa</div><div id="dash-ventas-causa"></div></div>
     </div>
-
-    <!-- Tabla detalle instalados -->
     <div class="card">
       <div class="card-title">✅ Detalle de instalaciones del mes</div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Cliente</th>
-              <th>Sucursal</th>
-              <th>Agente</th>
-              <th>Canal</th>
-              <th>Paquete</th>
-              <th>MRR</th>
-              <th>Prog.</th>
-              <th>Real</th>
-              <th>Gap</th>
-              <th>HULUX 24</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${instalados.length === 0 ? '<tr><td colspan="10" style="text-align:center;color:var(--gris-400);padding:24px;">Sin instalaciones este mes</td></tr>' :
-            instalados.map(l => {
-              const gap = l.gapInstalacionHoras;
-              const cumple = gap !== null && gap !== undefined && gap <= 24;
-              return `<tr>
-                <td style="font-weight:600;font-size:13px;">${l.nombre}</td>
-                <td style="font-size:12px;">${l.sucursal || '—'}</td>
-                <td style="font-size:12px;">${l.agente || '—'}</td>
-                <td style="font-size:11px;color:var(--gris-500);">${l.canal || '—'}</td>
-                <td style="font-size:12px;">${l.paquete || '—'}</td>
-                <td class="td-mono" style="color:#7C3AED;">${fmtMXN(l.precio)}</td>
-                <td style="font-size:12px;">${l.fechaInstalacion || '—'}</td>
-                <td style="font-size:12px;">${l.fechaInstalacionReal || '—'}</td>
-                <td class="td-mono" style="font-size:12px;color:${gap > 24 ? 'var(--rojo)' : gap <= 24 ? 'var(--verde)' : 'var(--gris-400)'};">${gap !== null && gap !== undefined ? gap + 'hrs' : '—'}</td>
-                <td style="text-align:center;">${gap !== null && gap !== undefined ? (cumple ? '✅' : '❌') : '—'}</td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Cliente</th><th>Sucursal</th><th>Agente</th><th>Canal</th><th>Paquete</th><th>MRR</th><th>Prog.</th><th>Real</th><th>Gap</th><th>HULUX 24</th></tr></thead>
+        <tbody id="dash-ventas-tabla"></tbody>
+      </table></div>
     </div>
   `;
+
+  // ── Agente ──────────────────────────────
+  const wAgente = document.getElementById('dash-ventas-agentes');
+  if (!Object.keys(porAgente).length) {
+    wAgente.innerHTML = '<div style="color:var(--gris-400);font-size:13px;">Sin datos</div>';
+  } else {
+    let h = '<div style="display:grid;grid-template-columns:1fr 40px 40px 40px 72px;gap:6px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid #F0F0F0;"><div style="font-size:10px;font-weight:700;color:var(--gris-500);text-transform:uppercase;">Agente</div><div style="font-size:10px;font-weight:700;color:var(--gris-500);text-align:center;">L</div><div style="font-size:10px;font-weight:700;color:var(--verde);text-align:center;">✅</div><div style="font-size:10px;font-weight:700;color:var(--rojo);text-align:center;">❌</div><div style="font-size:10px;font-weight:700;color:#7C3AED;text-align:right;">MRR</div></div>';
+    Object.entries(porAgente).sort((a,b) => b[1].mrr - a[1].mrr).forEach(([ag, d]) => {
+      h += '<div style="display:grid;grid-template-columns:1fr 40px 40px 40px 72px;gap:6px;padding:5px 0;border-bottom:1px solid #FAFAFA;align-items:center;"><div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + ag + '</div><div style="font-size:12px;text-align:center;color:var(--gris-500);">' + d.leads + '</div><div style="font-size:12px;text-align:center;font-weight:700;color:var(--verde);">' + d.instalados + '</div><div style="font-size:12px;text-align:center;font-weight:700;color:var(--rojo);">' + d.cancelados + '</div><div style="font-size:12px;text-align:right;font-weight:700;color:#7C3AED;">' + (d.mrr > 0 ? fmtMXN(d.mrr) : '—') + '</div></div>';
+    });
+    wAgente.innerHTML = h;
+  }
+
+  // ── Canal ────────────────────────────────
+  const wCanal = document.getElementById('dash-ventas-canal');
+  if (!Object.keys(porCanal).length) {
+    wCanal.innerHTML = '<div style="color:var(--gris-400);font-size:13px;">Sin instalaciones registradas</div>';
+  } else {
+    const maxMrr = Math.max(...Object.values(porCanal).map(x => x.mrr), 1);
+    let h = '';
+    Object.entries(porCanal).sort((a,b) => b[1].mrr - a[1].mrr).forEach(([canal, d]) => {
+      h += '<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="font-weight:600;">' + canal + '</span><span style="color:#7C3AED;font-weight:700;">' + fmtMXN(d.mrr) + ' · ' + d.count + '</span></div><div style="height:8px;background:var(--gris-100);border-radius:4px;overflow:hidden;"><div style="height:100%;width:' + Math.round(d.mrr/maxMrr*100) + '%;background:var(--verde);border-radius:4px;"></div></div></div>';
+    });
+    wCanal.innerHTML = h;
+  }
+
+  // ── Paquete ──────────────────────────────
+  const wPaq = document.getElementById('dash-ventas-paquete');
+  if (!Object.keys(porPaquete).length) {
+    wPaq.innerHTML = '<div style="color:var(--gris-400);font-size:13px;">Sin instalaciones</div>';
+  } else {
+    const maxC = Math.max(...Object.values(porPaquete).map(x => x.count), 1);
+    let h = '';
+    Object.entries(porPaquete).sort((a,b) => b[1].count - a[1].count).forEach(([paq, d]) => {
+      h += '<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="font-weight:600;">' + paq + '</span><span style="color:var(--naranja-deep);font-weight:700;">' + d.count + ' ventas · ' + fmtMXN(d.mrr) + '</span></div><div style="height:8px;background:var(--gris-100);border-radius:4px;overflow:hidden;"><div style="height:100%;width:' + Math.round(d.count/maxC*100) + '%;background:var(--naranja);border-radius:4px;"></div></div></div>';
+    });
+    wPaq.innerHTML = h;
+  }
+
+  // ── Causa cancelación ────────────────────
+  const wCausa = document.getElementById('dash-ventas-causa');
+  if (!Object.keys(porCausa).length) {
+    wCausa.innerHTML = '<div style="color:var(--gris-400);font-size:13px;">Sin cancelaciones este mes 🎉</div>';
+  } else {
+    let h = '<div style="display:grid;grid-template-columns:1fr 36px 72px;gap:6px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid #F0F0F0;"><div style="font-size:10px;font-weight:700;color:var(--gris-500);text-transform:uppercase;">Causa</div><div style="font-size:10px;font-weight:700;color:var(--gris-500);text-align:center;">#</div><div style="font-size:10px;font-weight:700;color:var(--rojo);text-align:right;">MRR perdido</div></div>';
+    Object.entries(porCausa).sort((a,b) => b[1].mrr - a[1].mrr).forEach(([causa, d]) => {
+      h += '<div style="display:grid;grid-template-columns:1fr 36px 72px;gap:6px;padding:5px 0;border-bottom:1px solid #FAFAFA;align-items:center;"><div style="font-size:12px;font-weight:500;">' + causa + '</div><div style="font-size:12px;text-align:center;font-weight:700;color:var(--rojo);">' + d.count + '</div><div style="font-size:12px;text-align:right;font-weight:700;color:var(--rojo);">' + (d.mrr > 0 ? fmtMXN(d.mrr) : '—') + '</div></div>';
+    });
+    wCausa.innerHTML = h;
+  }
+
+  // ── Tabla instalados ─────────────────────
+  const tbody = document.getElementById('dash-ventas-tabla');
+  if (!instalados.length) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--gris-400);padding:24px;">Sin instalaciones este mes</td></tr>';
+  } else {
+    tbody.innerHTML = instalados.map(l => {
+      const gap = l.gapInstalacionHoras;
+      const cumple = gap !== null && gap !== undefined && gap <= 24;
+      const gapColor = gap > 24 ? 'var(--rojo)' : (gap <= 24 ? 'var(--verde)' : 'var(--gris-400)');
+      return '<tr><td style="font-weight:600;font-size:13px;">' + l.nombre + '</td><td style="font-size:12px;">' + (l.sucursal||'—') + '</td><td style="font-size:12px;">' + (l.agente||'—') + '</td><td style="font-size:11px;color:var(--gris-500);">' + (l.canal||'—') + '</td><td style="font-size:12px;">' + (l.paquete||'—') + '</td><td class="td-mono" style="color:#7C3AED;">' + fmtMXN(l.precio) + '</td><td style="font-size:12px;">' + (l.fechaInstalacion||'—') + '</td><td style="font-size:12px;">' + (l.fechaInstalacionReal||'—') + '</td><td class="td-mono" style="font-size:12px;color:' + gapColor + ';">' + (gap !== null && gap !== undefined ? gap+'hrs' : '—') + '</td><td style="text-align:center;">' + (gap !== null && gap !== undefined ? (cumple ? '✅' : '❌') : '—') + '</td></tr>';
+    }).join('');
+  }
 }
 
 
