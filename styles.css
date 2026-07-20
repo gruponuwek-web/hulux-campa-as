@@ -564,12 +564,13 @@ tr:hover td { background: #FAFAFA; }
   background: rgba(0,0,0,0.4);
   z-index: 1000;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 20px;
+  padding: 40px 20px;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s;
+  overflow-y: auto;
 }
 .modal-overlay.open { opacity: 1; pointer-events: all; }
 .modal {
@@ -580,8 +581,7 @@ tr:hover td { background: #FAFAFA; }
   box-shadow: 0 20px 60px rgba(0,0,0,0.2);
   transform: translateY(10px);
   transition: transform 0.2s;
-  max-height: 90vh;
-  overflow-y: auto;
+  margin: auto;
 }
 .modal-overlay.open .modal { transform: translateY(0); }
 .modal-header {
