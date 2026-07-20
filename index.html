@@ -556,9 +556,14 @@
             <label>Fecha instalación programada</label>
             <input type="date" id="l-fecha-instalacion" oninput="calcularHulux24()">
           </div>
-          <div class="form-group">
-            <label>Fecha instalación realizada</label>
-            <input type="date" id="l-fecha-instalacion-real" oninput="calcularHulux24()">
+        </div>
+        <!-- Fecha instalación realizada — solo visible en estado Instalado -->
+        <div id="seccion-fecha-real" style="display:none;margin-bottom:16px;">
+          <div class="form-grid cols-3">
+            <div class="form-group">
+              <label>Fecha instalación realizada</label>
+              <input type="date" id="l-fecha-instalacion-real" oninput="calcularHulux24()">
+            </div>
           </div>
         </div>
         <!-- Badge HULUX 24 -->

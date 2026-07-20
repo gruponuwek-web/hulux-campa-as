@@ -425,6 +425,8 @@ function selectEstadoLead(estado) {
   });
   document.getElementById('seccion-contrato').style.display =
     (estado === 'contrato' || estado === 'instalado') ? '' : 'none';
+  document.getElementById('seccion-fecha-real').style.display =
+    estado === 'instalado' ? '' : 'none';
   document.getElementById('seccion-cancelacion').style.display =
     estado === 'cancelado' ? '' : 'none';
 }
