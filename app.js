@@ -1232,8 +1232,8 @@ function abrirModalLead(id) {
     selectEstadoLead(l.estado || 'negociacion');
   } else {
     document.getElementById('modal-lead-title').textContent = 'Nuevo lead';
-    ['l-nombre','l-telefono','l-precio','l-fecha-contrato','l-fecha-instalacion'].forEach(id => document.getElementById(id).value = '');
-    ['l-sucursal','l-agente','l-canal','l-campana','l-paquete','l-tipopago','l-promo','l-causa-cancelacion'].forEach(id => document.getElementById(id).value = '');
+    ['l-nombre','l-telefono','l-precio','l-fecha-contrato','l-fecha-instalacion'].forEach(fieldId => document.getElementById(fieldId).value = '');
+    ['l-sucursal','l-agente','l-canal','l-campana','l-paquete','l-tipopago','l-promo','l-causa-cancelacion'].forEach(fieldId => document.getElementById(fieldId).value = '');
     selectEstadoLead('negociacion');
   }
   abrirModal('modal-lead');
