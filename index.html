@@ -185,34 +185,58 @@
       <div class="section-title">Dashboard KPIs</div>
       <div class="section-sub">Resumen del mes activo y desglose por campaña.</div>
     </div>
+    <!-- Sub-tabs Marketing / Ventas -->
+    <div style="display:flex;gap:0;background:var(--gris-100);border-radius:10px;padding:3px;">
+      <button id="dash-tab-mkt" onclick="switchDashTab('marketing')"
+        style="padding:7px 18px;border-radius:8px;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;background:var(--naranja);color:#fff;transition:all 0.15s;">
+        📣 Marketing
+      </button>
+      <button id="dash-tab-vta" onclick="switchDashTab('ventas')"
+        style="padding:7px 18px;border-radius:8px;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:var(--gris-500);transition:all 0.15s;">
+        💰 Ventas
+      </button>
+    </div>
   </div>
 
-  <div id="dash-empty" class="empty-state" style="display:none;">
-    <div class="empty-icon">📊</div>
-    <div class="empty-title">Sin datos aún</div>
-    <div class="empty-sub">Registra al menos un reporte semanal para ver el dashboard.</div>
+  <!-- ── DASHBOARD MARKETING ── -->
+  <div id="dash-marketing">
+    <div id="dash-empty" class="empty-state" style="display:none;">
+      <div class="empty-icon">📊</div>
+      <div class="empty-title">Sin datos aún</div>
+      <div class="empty-sub">Registra al menos un reporte semanal para ver el dashboard.</div>
+    </div>
+    <div id="dash-content" style="display:none;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;background:var(--blanco);border:1px solid #E8E8E8;border-radius:var(--radio-lg);padding:12px 16px;">
+        <button class="btn btn-ghost" style="padding:6px 12px;font-size:16px;" onclick="navMes(-1)">‹</button>
+        <select id="dash-mes-select" onchange="dashMesSeleccionado=this.value;renderDashboard()" style="flex:1;font-size:15px;font-weight:700;border:none;background:transparent;text-align:center;cursor:pointer;"></select>
+        <button class="btn btn-ghost" style="padding:6px 12px;font-size:16px;" onclick="navMes(1)">›</button>
+      </div>
+      <div id="dash-resumen"></div>
+      <div style="display:flex;align-items:center;gap:12px;margin:24px 0 16px;">
+        <div style="flex:1;height:1px;background:#E8E8E8;"></div>
+        <span style="font-size:12px;font-weight:700;color:var(--gris-500);text-transform:uppercase;letter-spacing:0.8px;">Desglose por campaña</span>
+        <div style="flex:1;height:1px;background:#E8E8E8;"></div>
+      </div>
+      <div id="dash-desglose"></div>
+    </div>
   </div>
 
-  <div id="dash-content" style="display:none;">
-    <!-- Filtro de mes -->
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;background:var(--blanco);border:1px solid #E8E8E8;border-radius:var(--radio-lg);padding:12px 16px;">
-      <button class="btn btn-ghost" style="padding:6px 12px;font-size:16px;" onclick="navMes(-1)">‹</button>
-      <select id="dash-mes-select" onchange="dashMesSeleccionado=this.value;renderDashboard()" style="flex:1;font-size:15px;font-weight:700;border:none;background:transparent;text-align:center;cursor:pointer;"></select>
-      <button class="btn btn-ghost" style="padding:6px 12px;font-size:16px;" onclick="navMes(1)">›</button>
+  <!-- ── DASHBOARD VENTAS ── -->
+  <div id="dash-ventas" style="display:none;">
+    <div id="dash-ventas-empty" class="empty-state" style="display:none;">
+      <div class="empty-icon">💰</div>
+      <div class="empty-title">Sin ventas registradas</div>
+      <div class="empty-sub">Registra leads instalados en el pipeline para ver este dashboard.</div>
     </div>
-
-    <!-- Resumen consolidado del mes -->
-    <div id="dash-resumen"></div>
-
-    <!-- Divisor -->
-    <div style="display:flex;align-items:center;gap:12px;margin:24px 0 16px;">
-      <div style="flex:1;height:1px;background:#E8E8E8;"></div>
-      <span style="font-size:12px;font-weight:700;color:var(--gris-500);text-transform:uppercase;letter-spacing:0.8px;">Desglose por campaña</span>
-      <div style="flex:1;height:1px;background:#E8E8E8;"></div>
+    <div id="dash-ventas-content">
+      <!-- Filtro mes ventas -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;background:var(--blanco);border:1px solid #E8E8E8;border-radius:var(--radio-lg);padding:12px 16px;">
+        <button class="btn btn-ghost" style="padding:6px 12px;font-size:16px;" onclick="navMesVentas(-1)">‹</button>
+        <select id="dash-mes-ventas" onchange="dashMesVentasSeleccionado=this.value;renderDashVentas()" style="flex:1;font-size:15px;font-weight:700;border:none;background:transparent;text-align:center;cursor:pointer;"></select>
+        <button class="btn btn-ghost" style="padding:6px 12px;font-size:16px;" onclick="navMesVentas(1)">›</button>
+      </div>
+      <div id="dash-ventas-kpis"></div>
     </div>
-
-    <!-- Desglose por campaña -->
-    <div id="dash-desglose"></div>
   </div>
 </div>
 
@@ -507,10 +531,15 @@
           </div>
           <div class="form-group">
             <label>Fecha instalación programada</label>
-            <input type="date" id="l-fecha-instalacion">
+            <input type="date" id="l-fecha-instalacion" oninput="calcularHulux24()">
+          </div>
+          <div class="form-group">
+            <label>Fecha instalación realizada</label>
+            <input type="date" id="l-fecha-instalacion-real" oninput="calcularHulux24()">
           </div>
         </div>
-      </div>
+        <!-- Badge HULUX 24 -->
+        <div id="hulux24-badge" style="display:none;margin-bottom:4px;"></div>
 
       <!-- Sección 4: Cancelación -->
       <div id="seccion-cancelacion" style="display:none;">

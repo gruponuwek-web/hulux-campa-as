@@ -1226,13 +1226,15 @@ function abrirModalLead(id) {
     document.getElementById('l-precio').value    = l.precio || '';
     document.getElementById('l-tipopago').value  = l.tipoPago || '';
     document.getElementById('l-promo').value     = l.promo || '';
-    document.getElementById('l-fecha-contrato').value    = l.fechaContrato || '';
-    document.getElementById('l-fecha-instalacion').value = l.fechaInstalacion || '';
-    document.getElementById('l-causa-cancelacion').value = l.causaCancelacion || '';
+    document.getElementById('l-fecha-contrato').value          = l.fechaContrato || '';
+    document.getElementById('l-fecha-instalacion').value        = l.fechaInstalacion || '';
+    document.getElementById('l-fecha-instalacion-real').value   = l.fechaInstalacionReal || '';
+    document.getElementById('l-causa-cancelacion').value        = l.causaCancelacion || '';
+    calcularHulux24();
     selectEstadoLead(l.estado || 'negociacion');
   } else {
     document.getElementById('modal-lead-title').textContent = 'Nuevo lead';
-    ['l-nombre','l-telefono','l-precio','l-fecha-contrato','l-fecha-instalacion'].forEach(fieldId => document.getElementById(fieldId).value = '');
+    ['l-nombre','l-telefono','l-precio','l-fecha-contrato','l-fecha-instalacion','l-fecha-instalacion-real'].forEach(fieldId => document.getElementById(fieldId).value = '');
     ['l-sucursal','l-agente','l-canal','l-campana','l-paquete','l-tipopago','l-promo','l-causa-cancelacion'].forEach(fieldId => document.getElementById(fieldId).value = '');
     selectEstadoLead('negociacion');
   }
@@ -1254,23 +1256,28 @@ function guardarLead() {
   const nombre = document.getElementById('l-nombre').value.trim();
   if (!nombre) { alert('El nombre del prospecto es obligatorio.'); return; }
 
+  const fechaProg = document.getElementById('l-fecha-instalacion').value;
+  const fechaReal = document.getElementById('l-fecha-instalacion-real').value;
+
   const lead = {
-    id:               leadEditandoId || uid(),
+    id:                     leadEditandoId || uid(),
     nombre,
-    telefono:         document.getElementById('l-telefono').value.trim(),
-    sucursal:         document.getElementById('l-sucursal').value,
-    agente:           document.getElementById('l-agente').value,
-    canal:            document.getElementById('l-canal').value,
-    campana:          document.getElementById('l-campana').value,
-    estado:           estadoLeadSeleccionado,
-    paquete:          document.getElementById('l-paquete').value,
-    precio:           parseFloat(document.getElementById('l-precio').value) || 0,
-    tipoPago:         document.getElementById('l-tipopago').value,
-    promo:            document.getElementById('l-promo').value,
-    fechaContrato:    document.getElementById('l-fecha-contrato').value,
-    fechaInstalacion: document.getElementById('l-fecha-instalacion').value,
-    causaCancelacion: document.getElementById('l-causa-cancelacion').value,
-    fechaAlta:        leadEditandoId
+    telefono:               document.getElementById('l-telefono').value.trim(),
+    sucursal:               document.getElementById('l-sucursal').value,
+    agente:                 document.getElementById('l-agente').value,
+    canal:                  document.getElementById('l-canal').value,
+    campana:                document.getElementById('l-campana').value,
+    estado:                 estadoLeadSeleccionado,
+    paquete:                document.getElementById('l-paquete').value,
+    precio:                 parseFloat(document.getElementById('l-precio').value) || 0,
+    tipoPago:               document.getElementById('l-tipopago').value,
+    promo:                  document.getElementById('l-promo').value,
+    fechaContrato:          document.getElementById('l-fecha-contrato').value,
+    fechaInstalacion:       fechaProg,
+    fechaInstalacionReal:   fechaReal,
+    gapInstalacionHoras:    calcularGapHoras(fechaProg, fechaReal),
+    causaCancelacion:       document.getElementById('l-causa-cancelacion').value,
+    fechaAlta:              leadEditandoId
       ? (state.leads.find(x => x.id === leadEditandoId)?.fechaAlta || new Date().toISOString().slice(0,10))
       : new Date().toISOString().slice(0,10),
   };
@@ -1405,8 +1412,317 @@ function eliminarCatalogo(tipo, idx) {
 
 
 // ════════════════════════════════════════════
-// INIT
+// HULUX 24 — GAP INSTALACIÓN
 // ════════════════════════════════════════════
+function calcularGapHoras(fechaProg, fechaReal) {
+  if (!fechaProg || !fechaReal) return null;
+  const diff = new Date(fechaReal + 'T00:00:00') - new Date(fechaProg + 'T00:00:00');
+  return Math.round(diff / 3600000);
+}
+
+function calcularHulux24() {
+  const badge = document.getElementById('hulux24-badge');
+  if (!badge) return;
+  const prog = document.getElementById('l-fecha-instalacion')?.value;
+  const real = document.getElementById('l-fecha-instalacion-real')?.value;
+  if (!prog || !real) { badge.style.display = 'none'; return; }
+  const horas = calcularGapHoras(prog, real);
+  badge.style.display = '';
+  if (horas <= 24) {
+    badge.innerHTML = `<div style="background:#DCFCE7;border:1px solid #BBF7D0;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;color:#166534;">✅ HULUX 24 cumplido — instalado en ${horas} horas</div>`;
+  } else {
+    badge.innerHTML = `<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;color:#991B1B;">⚠️ HULUX 24 incumplido — ${horas} horas (${horas - 24}hrs de retraso)</div>`;
+  }
+}
+
+// ════════════════════════════════════════════
+// DASHBOARD — SWITCH TABS
+// ════════════════════════════════════════════
+let dashTabActual = 'marketing';
+let dashMesVentasSeleccionado = null;
+
+function switchDashTab(tab) {
+  dashTabActual = tab;
+  document.getElementById('dash-marketing').style.display = tab === 'marketing' ? '' : 'none';
+  document.getElementById('dash-ventas').style.display    = tab === 'ventas'    ? '' : 'none';
+  const btnMkt = document.getElementById('dash-tab-mkt');
+  const btnVta = document.getElementById('dash-tab-vta');
+  if (tab === 'marketing') {
+    btnMkt.style.background = 'var(--naranja)'; btnMkt.style.color = '#fff';
+    btnVta.style.background = 'transparent';    btnVta.style.color = 'var(--gris-500)';
+    renderDashboard();
+  } else {
+    btnVta.style.background = 'var(--verde)'; btnVta.style.color = '#fff';
+    btnMkt.style.background = 'transparent';  btnMkt.style.color = 'var(--gris-500)';
+    renderDashVentas();
+  }
+}
+
+// ════════════════════════════════════════════
+// DASHBOARD VENTAS
+// ════════════════════════════════════════════
+function getMesesConLeads() {
+  const meses = new Set();
+  state.leads.forEach(l => {
+    const fecha = l.fechaInstalacionReal || l.fechaContrato || l.fechaAlta;
+    if (fecha) meses.add(fecha.slice(0,7));
+  });
+  if (!meses.size) meses.add(new Date().toISOString().slice(0,7));
+  return [...meses].sort();
+}
+
+function navMesVentas(dir) {
+  const meses = getMesesConLeads();
+  const idx = meses.indexOf(dashMesVentasSeleccionado);
+  const newIdx = Math.max(0, Math.min(meses.length - 1, idx + dir));
+  dashMesVentasSeleccionado = meses[newIdx];
+  document.getElementById('dash-mes-ventas').value = dashMesVentasSeleccionado;
+  renderDashVentas();
+}
+
+function renderDashVentas() {
+  const meses = getMesesConLeads();
+  if (!dashMesVentasSeleccionado || !meses.includes(dashMesVentasSeleccionado)) {
+    dashMesVentasSeleccionado = meses[meses.length - 1];
+  }
+
+  // Poblar dropdown
+  const sel = document.getElementById('dash-mes-ventas');
+  sel.innerHTML = '';
+  meses.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = labelMes(m);
+    sel.appendChild(opt);
+  });
+  sel.value = dashMesVentasSeleccionado;
+
+  // Flechas extremos
+  const btns = document.querySelectorAll('#dash-ventas-content .btn-ghost');
+  if (btns[0]) btns[0].disabled = meses.indexOf(dashMesVentasSeleccionado) === 0;
+  if (btns[1]) btns[1].disabled = meses.indexOf(dashMesVentasSeleccionado) === meses.length - 1;
+
+  const mes = dashMesVentasSeleccionado;
+
+  // Filtrar leads del mes por fecha relevante
+  const leadsDelMes = state.leads.filter(l => {
+    const fecha = l.fechaInstalacionReal || l.fechaContrato || l.fechaAlta;
+    return fecha && fecha.slice(0,7) === mes;
+  });
+
+  const instalados  = leadsDelMes.filter(l => l.estado === 'instalado');
+  const contratos   = leadsDelMes.filter(l => l.estado === 'contrato');
+  const cancelados  = leadsDelMes.filter(l => l.estado === 'cancelado');
+
+  const mrrReal     = instalados.reduce((a, l) => a + (l.precio || 0), 0);
+  const mrrPrevisto = contratos.reduce((a, l)  => a + (l.precio || 0), 0) + mrrReal;
+  const mrrCancelado= cancelados.reduce((a, l) => a + (l.precio || 0), 0);
+  const mrrDiff     = mrrPrevisto > 0 ? Math.round((mrrReal / mrrPrevisto) * 100) : 0;
+
+  // HULUX 24
+  const conGap      = instalados.filter(l => l.gapInstalacionHoras !== null && l.gapInstalacionHoras !== undefined);
+  const cumplieron  = conGap.filter(l => l.gapInstalacionHoras <= 24);
+  const tasaH24     = conGap.length > 0 ? Math.round(cumplieron.length / conGap.length * 100) : null;
+  const gapPromedio = conGap.length > 0 ? Math.round(conGap.reduce((a,l) => a + l.gapInstalacionHoras, 0) / conGap.length) : null;
+
+  // Por agente
+  const porAgente = {};
+  leadsDelMes.forEach(l => {
+    const ag = l.agente || 'Sin asignar';
+    if (!porAgente[ag]) porAgente[ag] = { leads:0, contratos:0, instalados:0, cancelados:0, mrr:0 };
+    porAgente[ag].leads++;
+    if (l.estado === 'contrato')  porAgente[ag].contratos++;
+    if (l.estado === 'instalado') { porAgente[ag].instalados++; porAgente[ag].mrr += l.precio || 0; }
+    if (l.estado === 'cancelado') porAgente[ag].cancelados++;
+  });
+
+  // Por canal
+  const porCanal = {};
+  instalados.forEach(l => {
+    const c = l.canal || 'Sin canal';
+    if (!porCanal[c]) porCanal[c] = { count:0, mrr:0 };
+    porCanal[c].count++; porCanal[c].mrr += l.precio || 0;
+  });
+
+  // Por paquete
+  const porPaquete = {};
+  instalados.forEach(l => {
+    const p = l.paquete || 'Sin paquete';
+    if (!porPaquete[p]) porPaquete[p] = { count:0, mrr:0 };
+    porPaquete[p].count++; porPaquete[p].mrr += l.precio || 0;
+  });
+
+  // Por causa cancelación
+  const porCausa = {};
+  cancelados.forEach(l => {
+    const c = l.causaCancelacion || 'Sin causa';
+    if (!porCausa[c]) porCausa[c] = { count:0, mrr:0 };
+    porCausa[c].count++; porCausa[c].mrr += l.precio || 0;
+  });
+
+  const wrap = document.getElementById('dash-ventas-kpis');
+
+  wrap.innerHTML = `
+    <!-- KPIs principales -->
+    <div style="font-size:12px;font-weight:700;color:var(--gris-500);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:10px;">
+      Consolidado · ${labelMes(mes)}
+    </div>
+
+    <!-- MRR Previsto vs Real -->
+    <div class="kpi-grid" style="margin-bottom:14px;">
+      <div class="kpi-card">
+        <div class="kpi-label">MRR Real</div>
+        <div class="kpi-value big" style="color:var(--verde);">${mrrReal > 0 ? fmtMXN(mrrReal) : '—'}</div>
+        <div class="kpi-sub">${instalados.length} clientes instalados</div>
+        <div class="kpi-delta ${mrrDiff >= 80 ? 'up' : mrrDiff >= 50 ? 'neutral' : 'down'}">${mrrDiff}% del previsto</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">MRR Previsto</div>
+        <div class="kpi-value big" style="color:#7C3AED;">${mrrPrevisto > 0 ? fmtMXN(mrrPrevisto) : '—'}</div>
+        <div class="kpi-sub">${contratos.length + instalados.length} contratos totales</div>
+        <div class="kpi-delta neutral">Diferencia: ${fmtMXN(mrrPrevisto - mrrReal)}</div>
+      </div>
+      <div class="kpi-card" style="--kpi-color:var(--rojo)">
+        <div class="kpi-label">MRR Cancelado</div>
+        <div class="kpi-value big" style="color:var(--rojo);">${mrrCancelado > 0 ? fmtMXN(mrrCancelado) : '—'}</div>
+        <div class="kpi-sub">${cancelados.length} cancelaciones</div>
+        <div class="kpi-delta ${cancelados.length === 0 ? 'up' : 'down'}">${mrrPrevisto > 0 ? Math.round(mrrCancelado/mrrPrevisto*100) : 0}% del previsto perdido</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">HULUX 24</div>
+        <div class="kpi-value big" style="color:${tasaH24 === null ? 'var(--gris-300)' : tasaH24 >= 80 ? 'var(--verde)' : 'var(--rojo)'};">${tasaH24 !== null ? tasaH24 + '%' : '—'}</div>
+        <div class="kpi-sub">instalaciones a tiempo</div>
+        <div class="kpi-delta ${tasaH24 === null ? 'neutral' : tasaH24 >= 80 ? 'up' : 'down'}">${gapPromedio !== null ? 'Gap promedio: ' + gapPromedio + 'hrs' : 'Sin datos'}</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+
+      <!-- Por agente -->
+      <div class="card">
+        <div class="card-title">👤 Por agente vendedor</div>
+        ${Object.keys(porAgente).length === 0 ? '<div style="color:var(--gris-400);font-size:13px;">Sin datos</div>' : `
+        <div style="display:grid;grid-template-columns:1fr 40px 40px 40px 72px;gap:6px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid #F0F0F0;">
+          <div style="font-size:10px;font-weight:700;color:var(--gris-500);text-transform:uppercase;">Agente</div>
+          <div style="font-size:10px;font-weight:700;color:var(--gris-500);text-transform:uppercase;text-align:center;">L</div>
+          <div style="font-size:10px;font-weight:700;color:var(--verde);text-transform:uppercase;text-align:center;">✅</div>
+          <div style="font-size:10px;font-weight:700;color:var(--rojo);text-transform:uppercase;text-align:center;">❌</div>
+          <div style="font-size:10px;font-weight:700;color:#7C3AED;text-transform:uppercase;text-align:right;">MRR</div>
+        </div>
+        ${Object.entries(porAgente).sort((a,b) => b[1].mrr - a[1].mrr).map(([ag, d]) => `
+          <div style="display:grid;grid-template-columns:1fr 40px 40px 40px 72px;gap:6px;padding:5px 0;border-bottom:1px solid #FAFAFA;align-items:center;">
+            <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ag}</div>
+            <div style="font-size:12px;text-align:center;color:var(--gris-500);">${d.leads}</div>
+            <div style="font-size:12px;text-align:center;font-weight:700;color:var(--verde);">${d.instalados}</div>
+            <div style="font-size:12px;text-align:center;font-weight:700;color:var(--rojo);">${d.cancelados}</div>
+            <div style="font-size:12px;text-align:right;font-weight:700;color:#7C3AED;">${d.mrr > 0 ? fmtMXN(d.mrr) : '—'}</div>
+          </div>
+        `).join('')}`}
+      </div>
+
+      <!-- Por canal -->
+      <div class="card">
+        <div class="card-title">📡 Cierres por canal</div>
+        ${Object.keys(porCanal).length === 0 ? '<div style="color:var(--gris-400);font-size:13px;">Sin instalaciones registradas</div>' :
+        Object.entries(porCanal).sort((a,b) => b[1].mrr - a[1].mrr).map(([canal, d]) => {
+          const maxMrr = Math.max(...Object.values(porCanal).map(x => x.mrr), 1);
+          return `
+          <div style="margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+              <span style="font-weight:600;">${canal}</span>
+              <span style="color:#7C3AED;font-weight:700;">${fmtMXN(d.mrr)} · ${d.count} clientes</span>
+            </div>
+            <div style="height:8px;background:var(--gris-100);border-radius:4px;overflow:hidden;">
+              <div style="height:100%;width:${Math.round(d.mrr/maxMrr*100)}%;background:var(--verde);border-radius:4px;"></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <!-- Por paquete -->
+      <div class="card">
+        <div class="card-title">📦 Paquetes más vendidos</div>
+        ${Object.keys(porPaquete).length === 0 ? '<div style="color:var(--gris-400);font-size:13px;">Sin instalaciones</div>' :
+        Object.entries(porPaquete).sort((a,b) => b[1].count - a[1].count).map(([paq, d]) => {
+          const maxC = Math.max(...Object.values(porPaquete).map(x => x.count), 1);
+          return `
+          <div style="margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+              <span style="font-weight:600;">${paq}</span>
+              <span style="color:var(--naranja-deep);font-weight:700;">${d.count} ventas · ${fmtMXN(d.mrr)}</span>
+            </div>
+            <div style="height:8px;background:var(--gris-100);border-radius:4px;overflow:hidden;">
+              <div style="height:100%;width:${Math.round(d.count/maxC*100)}%;background:var(--naranja);border-radius:4px;"></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <!-- Cancelaciones -->
+      <div class="card">
+        <div class="card-title">❌ Cancelados por causa</div>
+        ${Object.keys(porCausa).length === 0 ? '<div style="color:var(--gris-400);font-size:13px;">Sin cancelaciones este mes 🎉</div>' : `
+        <div style="display:grid;grid-template-columns:1fr 36px 72px;gap:6px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid #F0F0F0;">
+          <div style="font-size:10px;font-weight:700;color:var(--gris-500);text-transform:uppercase;">Causa</div>
+          <div style="font-size:10px;font-weight:700;color:var(--gris-500);text-transform:uppercase;text-align:center;">#</div>
+          <div style="font-size:10px;font-weight:700;color:var(--rojo);text-transform:uppercase;text-align:right;">MRR perdido</div>
+        </div>
+        ${Object.entries(porCausa).sort((a,b) => b[1].mrr - a[1].mrr).map(([causa, d]) => `
+          <div style="display:grid;grid-template-columns:1fr 36px 72px;gap:6px;padding:5px 0;border-bottom:1px solid #FAFAFA;align-items:center;">
+            <div style="font-size:12px;font-weight:500;">${causa}</div>
+            <div style="font-size:12px;text-align:center;font-weight:700;color:var(--rojo);">${d.count}</div>
+            <div style="font-size:12px;text-align:right;font-weight:700;color:var(--rojo);">${d.mrr > 0 ? fmtMXN(d.mrr) : '—'}</div>
+          </div>
+        `).join('')}`}
+      </div>
+
+    </div>
+
+    <!-- Tabla detalle instalados -->
+    <div class="card">
+      <div class="card-title">✅ Detalle de instalaciones del mes</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Sucursal</th>
+              <th>Agente</th>
+              <th>Canal</th>
+              <th>Paquete</th>
+              <th>MRR</th>
+              <th>Prog.</th>
+              <th>Real</th>
+              <th>Gap</th>
+              <th>HULUX 24</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${instalados.length === 0 ? '<tr><td colspan="10" style="text-align:center;color:var(--gris-400);padding:24px;">Sin instalaciones este mes</td></tr>' :
+            instalados.map(l => {
+              const gap = l.gapInstalacionHoras;
+              const cumple = gap !== null && gap !== undefined && gap <= 24;
+              return `<tr>
+                <td style="font-weight:600;font-size:13px;">${l.nombre}</td>
+                <td style="font-size:12px;">${l.sucursal || '—'}</td>
+                <td style="font-size:12px;">${l.agente || '—'}</td>
+                <td style="font-size:11px;color:var(--gris-500);">${l.canal || '—'}</td>
+                <td style="font-size:12px;">${l.paquete || '—'}</td>
+                <td class="td-mono" style="color:#7C3AED;">${fmtMXN(l.precio)}</td>
+                <td style="font-size:12px;">${l.fechaInstalacion || '—'}</td>
+                <td style="font-size:12px;">${l.fechaInstalacionReal || '—'}</td>
+                <td class="td-mono" style="font-size:12px;color:${gap > 24 ? 'var(--rojo)' : gap <= 24 ? 'var(--verde)' : 'var(--gris-400)'};">${gap !== null && gap !== undefined ? gap + 'hrs' : '—'}</td>
+                <td style="text-align:center;">${gap !== null && gap !== undefined ? (cumple ? '✅' : '❌') : '—'}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+
 (async () => {
   const hoy = new Date();
   document.getElementById('header-fecha').textContent =
