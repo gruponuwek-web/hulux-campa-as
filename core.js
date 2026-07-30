@@ -37,7 +37,7 @@ let catalogoEditando = null; // { tipo, idx }
 // ════════════════════════════════════════════
 // GOOGLE SHEETS — CONEXIÓN
 // ════════════════════════════════════════════
-const GS_URL = "https://script.google.com/macros/s/AKfycbyGTonUjT09szLlEfyue4EmNpeMkff9FXJN5_xTdjPKcOpQg4kFviSSnA-AZsZI2J5iHg/exec";
+const GS_URL = "https://script.google.com/macros/s/AKfycbz8MCXDi8jHRUUcbWeVxQp2yI3VAGzGcAR_2hp7d970vwXe6dPMJLKgF9IYRzt5ezuOZA/exec";
 
 let gsOnline = false; // se activa si getAll responde OK
 
