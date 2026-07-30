@@ -397,8 +397,25 @@
   <!-- KPIs rápidos -->
   <div id="pipeline-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;"></div>
 
-  <!-- Toggle Vista -->
-  <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-bottom:12px;">
+  <!-- Toggle Activos / Histórico + selector de mes -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
+    <div style="display:flex;gap:0;background:var(--gris-100);border-radius:8px;padding:3px;">
+      <button id="btn-pipe-activos" onclick="switchPipelineModo('activos')"
+        style="padding:7px 16px;border-radius:6px;border:none;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer;background:var(--naranja);color:#fff;transition:all 0.15s;">
+        🔴 Activos
+      </button>
+      <button id="btn-pipe-historico" onclick="switchPipelineModo('historico')"
+        style="padding:7px 16px;border-radius:6px;border:none;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--gris-500);transition:all 0.15s;">
+        📅 Histórico
+      </button>
+    </div>
+    <!-- Selector de mes (solo en modo histórico) -->
+    <div id="pipeline-mes-wrap" style="display:none;align-items:center;gap:8px;background:var(--blanco);border:1px solid #E8E8E8;border-radius:8px;padding:6px 12px;">
+      <button class="btn btn-ghost" style="padding:4px 10px;font-size:14px;" onclick="navMesPipeline(-1)">‹</button>
+      <select id="pipeline-mes-select" onchange="pipelineMes=this.value;renderPipeline()" style="font-size:13px;font-weight:700;border:none;background:transparent;cursor:pointer;"></select>
+      <button class="btn btn-ghost" style="padding:4px 10px;font-size:14px;" onclick="navMesPipeline(1)">›</button>
+    </div>
+    <!-- Toggle Lista/Kanban -->
     <div style="display:flex;gap:0;background:var(--gris-100);border-radius:8px;padding:3px;">
       <button id="btn-vista-lista" onclick="switchVistaPipeline('lista')"
         style="padding:6px 14px;border-radius:6px;border:none;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer;background:var(--blanco);color:var(--negro);box-shadow:0 1px 3px rgba(0,0,0,0.1);transition:all 0.15s;">

@@ -61,86 +61,152 @@ function alertaReloj(lead) {
 // ════════════════════════════════════════════
 // PIPELINE — RENDER
 // ════════════════════════════════════════════
+var pipelineModo = 'activos'; // 'activos' | 'historico'
+var pipelineMes  = null;      // 'YYYY-MM'
+
+function getMesesConLeadsCerrados() {
+  var meses = {};
+  state.leads.forEach(function(l) {
+    if (l.estado !== 'instalado' && l.estado !== 'cancelado') return;
+    var fecha = l.fechaInstalacionReal || l.fechaContrato || l.fechaAlta;
+    if (fecha) meses[fecha.slice(0,7)] = true;
+  });
+  return Object.keys(meses).sort();
+}
+
+function switchPipelineModo(modo) {
+  pipelineModo = modo;
+  var btnAct = document.getElementById('btn-pipe-activos');
+  var btnHis = document.getElementById('btn-pipe-historico');
+  var wrapMes = document.getElementById('pipeline-mes-wrap');
+
+  if (modo === 'activos') {
+    btnAct.style.background = 'var(--naranja)'; btnAct.style.color = '#fff';
+    btnHis.style.background = 'transparent';    btnHis.style.color = 'var(--gris-500)';
+    wrapMes.style.display = 'none';
+    // En modo activos resetear el filtro de estado
+    var sel = document.getElementById('filtro-estado');
+    if (sel) sel.value = '';
+  } else {
+    btnHis.style.background = 'var(--negro)'; btnHis.style.color = '#fff';
+    btnAct.style.background = 'transparent';  btnAct.style.color = 'var(--gris-500)';
+    wrapMes.style.display = 'flex';
+    // Inicializar mes si no hay uno
+    if (!pipelineMes) {
+      var meses = getMesesConLeadsCerrados();
+      pipelineMes = meses.length ? meses[meses.length - 1] : new Date().toISOString().slice(0,7);
+    }
+    poblarSelectMesPipeline();
+  }
+  renderPipeline();
+}
+
+function poblarSelectMesPipeline() {
+  var sel = document.getElementById('pipeline-mes-select');
+  if (!sel) return;
+  var meses = getMesesConLeadsCerrados();
+  if (!meses.length) meses.push(new Date().toISOString().slice(0,7));
+  sel.innerHTML = '';
+  meses.forEach(function(m) {
+    var opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = labelMesPipe(m);
+    sel.appendChild(opt);
+  });
+  sel.value = pipelineMes || meses[meses.length - 1];
+}
+
+function labelMesPipe(mesKey) {
+  var parts = mesKey.split('-');
+  var d = new Date(parseInt(parts[0]), parseInt(parts[1])-1, 1);
+  return d.toLocaleDateString('es-MX', { month:'long', year:'numeric' })
+    .replace(/^\w/, function(c) { return c.toUpperCase(); });
+}
+
+function navMesPipeline(dir) {
+  var meses = getMesesConLeadsCerrados();
+  if (!meses.length) return;
+  var idx = meses.indexOf(pipelineMes);
+  var newIdx = Math.max(0, Math.min(meses.length - 1, idx + dir));
+  pipelineMes = meses[newIdx];
+  document.getElementById('pipeline-mes-select').value = pipelineMes;
+  renderPipeline();
+}
+
 function renderPipeline() {
   const filtroEstado    = document.getElementById('filtro-estado')?.value || '';
   const filtroSucursal  = document.getElementById('filtro-sucursal-pipe')?.value || '';
   const filtroAgente    = document.getElementById('filtro-agente-pipe')?.value || '';
 
-  // Poblar selectores de filtro con catálogos
+  // Poblar selectores
   poblarSelect('filtro-sucursal-pipe', state.catalogos.sucursales, 'Todas las sucursales');
   poblarSelect('filtro-agente-pipe',   state.catalogos.agentes,    'Todos los agentes');
 
-  // Alertas
+  // ── Separar leads activos vs cerrados ────────
+  var leadsActivos  = state.leads.filter(function(l) {
+    return l.estado === 'negociacion' || l.estado === 'contrato';
+  });
+  var leadsCerrados = state.leads.filter(function(l) {
+    return l.estado === 'instalado' || l.estado === 'cancelado';
+  });
+
+  // ── Leads a mostrar según modo ────────────────
+  var leadsBase;
+  if (pipelineModo === 'activos') {
+    leadsBase = leadsActivos;
+    // En modo activos el filtro de estado solo aplica entre negociacion/contrato
+    if (filtroEstado && (filtroEstado === 'negociacion' || filtroEstado === 'contrato')) {
+      leadsBase = leadsBase.filter(function(l) { return l.estado === filtroEstado; });
+    }
+  } else {
+    // Histórico: filtrar por mes
+    var mes = pipelineMes || new Date().toISOString().slice(0,7);
+    leadsBase = leadsCerrados.filter(function(l) {
+      var fecha = l.fechaInstalacionReal || l.fechaContrato || l.fechaAlta;
+      return fecha && fecha.slice(0,7) === mes;
+    });
+    if (filtroEstado) leadsBase = leadsBase.filter(function(l) { return l.estado === filtroEstado; });
+  }
+
+  if (filtroSucursal) leadsBase = leadsBase.filter(function(l) { return l.sucursal === filtroSucursal; });
+  if (filtroAgente)   leadsBase = leadsBase.filter(function(l) { return l.agente === filtroAgente; });
+
+  // ── Alertas (siempre sobre activos) ──────────
   const alertasWrap = document.getElementById('pipeline-alertas');
-  const criticos = state.leads.filter(l => alertaReloj(l)?.nivel === 'critica');
-  const warns    = state.leads.filter(l => alertaReloj(l)?.nivel === 'warn');
+  const criticos = leadsActivos.filter(function(l) { return alertaReloj(l)?.nivel === 'critica'; });
+  const warns    = leadsActivos.filter(function(l) { return alertaReloj(l)?.nivel === 'warn'; });
   alertasWrap.innerHTML = '';
-  criticos.forEach(l => {
+  criticos.forEach(function(l) {
     const a = alertaReloj(l);
-    alertasWrap.innerHTML += `
-      <div class="alerta-card critica">
-        <span style="font-size:20px;">🚨</span>
-        <div>
-          <strong>${l.nombre}</strong> — Contrato sin instalar hace <strong>${a.horas} horas</strong>
-          <div style="font-size:12px;color:var(--gris-500);">${l.sucursal} · ${l.agente}</div>
-        </div>
-        <button class="btn btn-ghost" style="margin-left:auto;padding:6px 12px;font-size:12px;" onclick="abrirModalLead('${l.id}')">Ver lead</button>
-      </div>`;
+    alertasWrap.innerHTML += '<div class="alerta-card critica"><span style="font-size:20px;">🚨</span><div><strong>' + l.nombre + '</strong> — Contrato sin instalar hace <strong>' + a.horas + ' horas</strong><div style="font-size:12px;color:var(--gris-500);">' + l.sucursal + ' · ' + l.agente + '</div></div><button class="btn btn-ghost" style="margin-left:auto;padding:6px 12px;font-size:12px;" onclick="abrirModalLead(\'' + l.id + '\')">Ver lead</button></div>';
   });
-  warns.forEach(l => {
+  warns.forEach(function(l) {
     const a = alertaReloj(l);
-    alertasWrap.innerHTML += `
-      <div class="alerta-card">
-        <span style="font-size:20px;">⚠️</span>
-        <div>
-          <strong>${l.nombre}</strong> — Contrato a <strong>${48 - a.horas} horas</strong> de vencer
-          <div style="font-size:12px;color:var(--gris-500);">${l.sucursal} · ${l.agente}</div>
-        </div>
-        <button class="btn btn-ghost" style="margin-left:auto;padding:6px 12px;font-size:12px;" onclick="abrirModalLead('${l.id}')">Ver lead</button>
-      </div>`;
+    alertasWrap.innerHTML += '<div class="alerta-card"><span style="font-size:20px;">⚠️</span><div><strong>' + l.nombre + '</strong> — Contrato a <strong>' + (48 - a.horas) + ' horas</strong> de vencer<div style="font-size:12px;color:var(--gris-500);">' + l.sucursal + ' · ' + l.agente + '</div></div><button class="btn btn-ghost" style="margin-left:auto;padding:6px 12px;font-size:12px;" onclick="abrirModalLead(\'' + l.id + '\')">Ver lead</button></div>';
   });
 
-  // Filtrar leads
-  let leads = [...state.leads];
-  if (filtroEstado)   leads = leads.filter(l => l.estado === filtroEstado);
-  if (filtroSucursal) leads = leads.filter(l => l.sucursal === filtroSucursal);
-  if (filtroAgente)   leads = leads.filter(l => l.agente === filtroAgente);
-
-  // KPIs rápidos
-  const total      = state.leads.length;
-  const activos    = state.leads.filter(l => l.estado === 'negociacion' || l.estado === 'contrato').length;
-  const instalados = state.leads.filter(l => l.estado === 'instalado').length;
-  const caidos     = state.leads.filter(l => l.estado === 'cancelado').length;
-  const mrrReal    = state.leads.filter(l => l.estado === 'instalado').reduce((a, l) => a + (Number(l.precio) || 0), 0);
-  const mrrPrevisto= state.leads.filter(l => l.estado === 'contrato').reduce((a, l) => a + (Number(l.precio) || 0), 0);
-  const estancados = state.leads.filter(l => {
+  // ── KPIs según modo ───────────────────────────
+  var kpiBase = pipelineModo === 'activos' ? leadsActivos : leadsBase;
+  const total      = kpiBase.length;
+  const activos    = leadsActivos.length;
+  const instalados = (pipelineModo === 'activos' ? leadsCerrados : leadsBase).filter(function(l) { return l.estado === 'instalado'; }).length;
+  const caidos     = (pipelineModo === 'activos' ? leadsCerrados : leadsBase).filter(function(l) { return l.estado === 'cancelado'; }).length;
+  const mrrReal    = (pipelineModo === 'activos' ? leadsCerrados : leadsBase).filter(function(l) { return l.estado === 'instalado'; }).reduce(function(a,l) { return a + (Number(l.precio)||0); }, 0);
+  const mrrPrevisto= leadsActivos.filter(function(l) { return l.estado === 'contrato'; }).reduce(function(a,l) { return a + (Number(l.precio)||0); }, 0);
+  const estancados = leadsActivos.filter(function(l) {
     if (l.estado !== 'negociacion') return false;
     const d = diasDesde(l.fechaAlta);
     return d !== null && d >= 2;
   }).length;
 
-  document.getElementById('pipeline-kpis').innerHTML = `
-    <div class="kpi-card">
-      <div class="kpi-label">En pipeline</div>
-      <div class="kpi-value big">${activos}</div>
-      <div class="kpi-sub">${estancados > 0 ? `<span style="color:var(--rojo);">⚠️ ${estancados} estancados +2 días</span>` : 'Sin estancados'}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Instalados</div>
-      <div class="kpi-value big" style="color:var(--verde);">${instalados}</div>
-      <div class="kpi-sub">MRR Real: ${fmtMXN(mrrReal)}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">MRR Previsto</div>
-      <div class="kpi-value big" style="color:#7C3AED;">${fmtMXN(mrrPrevisto)}</div>
-      <div class="kpi-sub">${state.leads.filter(l=>l.estado==='contrato').length} contratos pendientes de instalar</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Cancelados</div>
-      <div class="kpi-value big" style="color:var(--rojo);">${caidos}</div>
-      <div class="kpi-sub">de ${total} leads totales · ${total > 0 ? Math.round(caidos/total*100) : 0}%</div>
-    </div>
-  `;
+  document.getElementById('pipeline-kpis').innerHTML =
+    '<div class="kpi-card"><div class="kpi-label">Activos ahora</div><div class="kpi-value big">' + activos + '</div><div class="kpi-sub">' + (estancados > 0 ? '<span style="color:var(--rojo);">⚠️ ' + estancados + ' estancados +2d</span>' : 'Sin estancados') + '</div></div>' +
+    '<div class="kpi-card"><div class="kpi-label">Instalados</div><div class="kpi-value big" style="color:var(--verde);">' + instalados + '</div><div class="kpi-sub">MRR Real: ' + fmtMXN(mrrReal) + '</div></div>' +
+    '<div class="kpi-card"><div class="kpi-label">MRR Previsto</div><div class="kpi-value big" style="color:#7C3AED;">' + fmtMXN(mrrPrevisto) + '</div><div class="kpi-sub">' + leadsActivos.filter(function(l){return l.estado==='contrato';}).length + ' contratos pendientes</div></div>' +
+    '<div class="kpi-card"><div class="kpi-label">Cancelados</div><div class="kpi-value big" style="color:var(--rojo);">' + caidos + '</div><div class="kpi-sub">de ' + state.leads.length + ' leads totales</div></div>';
+
+  // ── Tabla y Kanban ────────────────────────────
+  var leads = leadsBase;
 
   // Tabla
   const tbody = document.getElementById('pipeline-body');
