@@ -3,29 +3,60 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HULUX · Seguimiento de Campañas</title>
+  <title>HULUX · Portal Comercial</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
+<!-- ═══════════════════════════════════════════ -->
+<!-- PANTALLA DE SELECCIÓN DE ROL -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="pantalla-rol" style="display:none;position:fixed;inset:0;background:var(--negro);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:40px;">
+  <div style="text-align:center;">
+    <div style="font-size:28px;font-weight:800;color:var(--blanco);letter-spacing:-0.5px;">
+      <span style="color:var(--naranja);">HULUX</span> Telecomunicaciones
+    </div>
+    <div style="font-size:14px;color:var(--gris-300);margin-top:6px;">¿Desde qué área vas a trabajar hoy?</div>
+  </div>
+  <div style="display:flex;gap:20px;">
+    <button onclick="seleccionarRol('marketing')" style="width:220px;padding:28px 20px;border-radius:16px;border:2px solid #333;background:#1A1A1A;cursor:pointer;text-align:center;transition:all 0.2s;font-family:Inter,sans-serif;" onmouseover="this.style.borderColor='var(--naranja)';this.style.background='#242424'" onmouseout="this.style.borderColor='#333';this.style.background='#1A1A1A'">
+      <div style="font-size:36px;margin-bottom:10px;">📣</div>
+      <div style="font-size:16px;font-weight:700;color:var(--blanco);margin-bottom:4px;">Marketing</div>
+      <div style="font-size:12px;color:var(--gris-400);">Campañas, reportes<br>y pipeline comercial</div>
+    </button>
+    <button onclick="seleccionarRol('ventas')" style="width:220px;padding:28px 20px;border-radius:16px;border:2px solid #333;background:#1A1A1A;cursor:pointer;text-align:center;transition:all 0.2s;font-family:Inter,sans-serif;" onmouseover="this.style.borderColor='var(--verde)';this.style.background='#242424'" onmouseout="this.style.borderColor='#333';this.style.background='#1A1A1A'">
+      <div style="font-size:36px;margin-bottom:10px;">💼</div>
+      <div style="font-size:16px;font-weight:700;color:var(--blanco);margin-bottom:4px;">Ventas</div>
+      <div style="font-size:12px;color:var(--gris-400);">Pipeline, seguimiento<br>y dashboard de ventas</div>
+    </button>
+  </div>
+</div>
+
 <!-- HEADER -->
-<header class="header">
+<header class="header" id="main-header" style="display:none;">
   <div class="header-brand">
     <span>HULUX</span> Telecomunicaciones
-    <div class="header-badge">Marketing</div>
+    <div class="header-badge" id="header-rol-badge">Marketing</div>
   </div>
   <div style="display:flex;align-items:center;gap:16px;">
+    <button onclick="volverSeleccionRol()" style="padding:5px 12px;border-radius:6px;border:1px solid #333;background:transparent;color:var(--gris-300);font-family:Inter,sans-serif;font-size:11px;font-weight:600;cursor:pointer;" onmouseover="this.style.borderColor='var(--naranja)';this.style.color='var(--naranja)'" onmouseout="this.style.borderColor='#333';this.style.color='var(--gris-300)'">↩ Cambiar área</button>
     <div id="sync-status"><span style="color:#666;font-size:12px;">⏳ Conectando...</span></div>
     <div style="font-size:12px;color:var(--gris-500);" id="header-fecha"></div>
   </div>
 </header>
 
-<!-- NAV -->
-<nav class="nav">
+<!-- NAV MARKETING -->
+<nav class="nav" id="nav-marketing" style="display:none;">
   <div class="nav-tab active" onclick="showScreen('campanas')">📋 Campañas</div>
-  <div class="nav-tab" onclick="showScreen('pipeline')">🔁 Pipeline</div>
   <div class="nav-tab" onclick="showScreen('reporte')">📥 Reporte Semanal</div>
   <div class="nav-tab" onclick="showScreen('dashboard')">📊 Dashboard KPIs</div>
+  <div class="nav-tab" onclick="showScreen('pipeline')">🔁 Pipeline <span id="badge-pipeline-mkt" style="display:none;background:var(--rojo);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px;"></span></div>
+</nav>
+
+<!-- NAV VENTAS -->
+<nav class="nav" id="nav-ventas" style="display:none;">
+  <div class="nav-tab active" onclick="showScreen('pipeline')">🔁 Pipeline <span id="badge-pipeline-vta" style="display:none;background:var(--rojo);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px;"></span></div>
+  <div class="nav-tab" onclick="showScreen('dashboard')">📊 Dashboard Ventas</div>
   <div class="nav-tab" onclick="showScreen('ajustes')">⚙️ Ajustes</div>
 </nav>
 
@@ -595,6 +626,12 @@
         <button class="estado-btn" data-estado="cancelado" onclick="selectEstadoLead('cancelado')">❌ Cancelado</button>
       </div>
 
+      <!-- Historial de estados -->
+      <div id="seccion-historial" style="display:none;">
+        <div style="font-size:11px;font-weight:700;color:var(--gris-500);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;padding-top:16px;border-top:1px solid #F0F0F0;">Historial</div>
+        <div id="historial-timeline"></div>
+      </div>
+
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="cerrarModal('modal-lead')">Cancelar</button>
         <button class="btn btn-primary" id="btn-guardar-lead" onclick="guardarLead()">Guardar lead</button>
@@ -634,6 +671,7 @@
 <script src="dashboard-ventas.js"></script>
 <script src="pipeline.js"></script>
 <script src="ajustes.js"></script>
+<script src="roles.js"></script>
 <script src="init.js"></script>
 </body>
 </html>

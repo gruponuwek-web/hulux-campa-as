@@ -164,13 +164,31 @@ function getSemanas(campana) {
 // ════════════════════════════════════════════
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
-  document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
-  document.getElementById('screen-' + id).classList.add('active');
-  var tabs = document.querySelectorAll('.nav-tab');
-  var map = { campanas: 0, pipeline: 1, reporte: 2, dashboard: 3, ajustes: 4 };
-  if (map[id] !== undefined) tabs[map[id]].classList.add('active');
+
+  // Desactivar tabs en ambos navs
+  document.querySelectorAll('#nav-marketing .nav-tab, #nav-ventas .nav-tab').forEach(function(t) {
+    t.classList.remove('active');
+  });
+
+  var screen = document.getElementById('screen-' + id);
+  if (screen) screen.classList.add('active');
+
+  // Activar tab correcto según rol
+  var navId = (rolActual === 'ventas') ? 'nav-ventas' : 'nav-marketing';
+  var nav = document.getElementById(navId);
+  if (nav) {
+    nav.querySelectorAll('.nav-tab').forEach(function(t) {
+      if (t.getAttribute('onclick') && t.getAttribute('onclick').indexOf("'" + id + "'") !== -1) {
+        t.classList.add('active');
+      }
+    });
+  }
+
   if (id === 'reporte')   renderReporte();
-  if (id === 'dashboard') renderDashboard();
+  if (id === 'dashboard') {
+    if (rolActual === 'ventas') switchDashTab('ventas');
+    else renderDashboard();
+  }
   if (id === 'campanas')  renderCampanas();
   if (id === 'pipeline')  renderPipeline();
   if (id === 'ajustes')   renderAjustes();

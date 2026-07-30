@@ -394,11 +394,13 @@ function abrirModalLead(id) {
     document.getElementById('l-causa-cancelacion').value        = l.causaCancelacion || '';
     calcularHulux24();
     selectEstadoLead(l.estado || 'negociacion');
+    renderHistorial(l);
   } else {
     document.getElementById('modal-lead-title').textContent = 'Nuevo lead';
     ['l-nombre','l-telefono','l-precio','l-fecha-contrato','l-fecha-instalacion','l-fecha-instalacion-real'].forEach(fieldId => document.getElementById(fieldId).value = '');
     ['l-sucursal','l-agente','l-canal','l-campana','l-paquete','l-tipopago','l-promo','l-causa-cancelacion'].forEach(fieldId => document.getElementById(fieldId).value = '');
     selectEstadoLead('negociacion');
+    renderHistorial(null);
   }
   abrirModal('modal-lead');
 }
@@ -445,6 +447,20 @@ function guardarLead() {
       ? (state.leads.find(x => x.id === leadEditandoId)?.fechaAlta || new Date().toISOString().slice(0,10))
       : new Date().toISOString().slice(0,10),
   };
+
+  // Registrar historial si cambió el estado
+  if (leadEditandoId) {
+    var leadAnterior = state.leads.find(function(x) { return x.id === leadEditandoId; });
+    if (leadAnterior && leadAnterior.estado !== lead.estado) {
+      lead.historial = leadAnterior.historial || [];
+      registrarHistorial(lead, lead.estado);
+    } else if (leadAnterior) {
+      lead.historial = leadAnterior.historial || [];
+    }
+  } else {
+    lead.historial = [];
+    registrarHistorial(lead, 'negociacion');
+  }
 
   if (leadEditandoId) {
     const idx = state.leads.findIndex(x => x.id === leadEditandoId);
