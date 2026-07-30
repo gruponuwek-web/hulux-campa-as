@@ -538,12 +538,27 @@
           <input type="text" id="l-telefono" placeholder="10 dígitos">
         </div>
         <div class="form-group">
-          <label>Sucursal</label>
+          <label>Sucursal / Municipio</label>
           <select id="l-sucursal"><option value="">Selecciona...</option></select>
+        </div>
+        <div class="form-group">
+          <label>Localidad / Zona <span style="color:var(--gris-400);font-weight:400;">(colonia, fraccionamiento...)</span></label>
+          <input type="text" id="l-localidad" placeholder="Ej. Col. Centro, Tezoquipa...">
         </div>
         <div class="form-group">
           <label>Agente vendedor</label>
           <select id="l-agente"><option value="">Selecciona...</option></select>
+        </div>
+        <div class="form-group">
+          <label>Cómo se enteró</label>
+          <select id="l-como-entero">
+            <option value="">Selecciona...</option>
+            <option value="Redes Sociales">Redes Sociales</option>
+            <option value="Sucursal">Sucursal</option>
+            <option value="Volateo/Perifoneo">Volateo / Perifoneo</option>
+            <option value="Recomendación Vecino/Amigo">Recomendación Vecino/Amigo</option>
+            <option value="Otro">Otro</option>
+          </select>
         </div>
       </div>
 
@@ -595,6 +610,25 @@
           <div class="form-group">
             <label>Promoción aplicada</label>
             <select id="l-promo"><option value="">Sin promoción</option></select>
+          </div>
+          <div class="form-group">
+            <label>Forma de contrato</label>
+            <select id="l-forma-contrato">
+              <option value="">Selecciona...</option>
+              <option value="En línea">En línea</option>
+              <option value="Físico">Físico</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Número de pagos (instalación)</label>
+            <select id="l-num-pagos">
+              <option value="">Selecciona...</option>
+              <option value="1 pago">1 pago</option>
+              <option value="2 pagos">2 pagos</option>
+              <option value="3 pagos">3 pagos</option>
+              <option value="5 pagos">5 pagos</option>
+              <option value="Otro">Otro</option>
+            </select>
           </div>
           <div class="form-group">
             <label>Fecha de contrato</label>

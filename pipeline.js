@@ -454,6 +454,10 @@ function abrirModalLead(id) {
     document.getElementById('l-precio').value    = l.precio || '';
     document.getElementById('l-tipopago').value  = l.tipoPago || '';
     document.getElementById('l-promo').value     = l.promo || '';
+    document.getElementById('l-localidad').value         = l.localidad || '';
+    document.getElementById('l-como-entero').value       = l.comoEntero || '';
+    document.getElementById('l-forma-contrato').value    = l.formaContrato || '';
+    document.getElementById('l-num-pagos').value         = l.numPagos || '';
     document.getElementById('l-fecha-contrato').value          = l.fechaContrato || '';
     document.getElementById('l-fecha-instalacion').value        = l.fechaInstalacion || '';
     document.getElementById('l-fecha-instalacion-real').value   = l.fechaInstalacionReal || '';
@@ -463,8 +467,8 @@ function abrirModalLead(id) {
     renderHistorial(l);
   } else {
     document.getElementById('modal-lead-title').textContent = 'Nuevo lead';
-    ['l-nombre','l-telefono','l-precio','l-fecha-contrato','l-fecha-instalacion','l-fecha-instalacion-real'].forEach(fieldId => document.getElementById(fieldId).value = '');
-    ['l-sucursal','l-agente','l-canal','l-campana','l-paquete','l-tipopago','l-promo','l-causa-cancelacion'].forEach(fieldId => document.getElementById(fieldId).value = '');
+    ['l-nombre','l-telefono','l-precio','l-localidad','l-fecha-contrato','l-fecha-instalacion','l-fecha-instalacion-real'].forEach(fieldId => document.getElementById(fieldId).value = '');
+    ['l-sucursal','l-agente','l-canal','l-campana','l-paquete','l-tipopago','l-promo','l-como-entero','l-forma-contrato','l-num-pagos','l-causa-cancelacion'].forEach(fieldId => document.getElementById(fieldId).value = '');
     selectEstadoLead('negociacion');
     renderHistorial(null);
   }
@@ -496,14 +500,18 @@ function guardarLead() {
     nombre,
     telefono:               document.getElementById('l-telefono').value.trim(),
     sucursal:               document.getElementById('l-sucursal').value,
+    localidad:              document.getElementById('l-localidad').value.trim(),
     agente:                 document.getElementById('l-agente').value,
     canal:                  document.getElementById('l-canal').value,
     campana:                document.getElementById('l-campana').value,
+    comoEntero:             document.getElementById('l-como-entero').value,
     estado:                 estadoLeadSeleccionado,
     paquete:                document.getElementById('l-paquete').value,
     precio:                 parseFloat(document.getElementById('l-precio').value) || 0,
     tipoPago:               document.getElementById('l-tipopago').value,
     promo:                  document.getElementById('l-promo').value,
+    formaContrato:          document.getElementById('l-forma-contrato').value,
+    numPagos:               document.getElementById('l-num-pagos').value,
     fechaContrato:          document.getElementById('l-fecha-contrato').value,
     fechaInstalacion:       fechaProg,
     fechaInstalacionReal:   fechaReal,
