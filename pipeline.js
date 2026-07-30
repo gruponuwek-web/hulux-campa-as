@@ -525,15 +525,14 @@ function guardarLead() {
   // Registrar historial si cambió el estado
   if (leadEditandoId) {
     var leadAnterior = state.leads.find(function(x) { return x.id === leadEditandoId; });
-    if (leadAnterior && leadAnterior.estado !== lead.estado) {
-      lead.historial = leadAnterior.historial || [];
-      registrarHistorial(lead, lead.estado);
-    } else if (leadAnterior) {
-      lead.historial = leadAnterior.historial || [];
+    var estadoAnterior = leadAnterior ? leadAnterior.estado : 'negociacion';
+    lead.historial = leadAnterior ? (leadAnterior.historial || []) : [];
+    if (leadAnterior && estadoAnterior !== lead.estado) {
+      registrarHistorial(lead, estadoAnterior, lead.estado);
     }
   } else {
     lead.historial = [];
-    registrarHistorial(lead, 'negociacion');
+    registrarHistorial(lead, null, 'negociacion');
   }
 
   if (leadEditandoId) {

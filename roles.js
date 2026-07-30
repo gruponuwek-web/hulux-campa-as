@@ -114,12 +114,12 @@ var ESTADO_LABELS = {
   cancelado:   { icon: '❌', label: 'Cancelado', color: 'var(--rojo)' },
 };
 
-function registrarHistorial(lead, estadoNuevo) {
+function registrarHistorial(lead, estadoAnterior, estadoNuevo) {
   if (!lead.historial) lead.historial = [];
   var entrada = {
-    estado: estadoNuevo,
-    fecha:  new Date().toISOString().slice(0, 16).replace('T', ' '),
-    de:     lead.estado || 'negociacion',
+    de:    estadoAnterior || 'negociacion',
+    a:     estadoNuevo,
+    fecha: new Date().toISOString().slice(0, 16).replace('T', ' '),
   };
   lead.historial.push(entrada);
 
